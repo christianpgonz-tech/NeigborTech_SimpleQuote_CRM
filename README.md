@@ -1,8 +1,24 @@
 # NeighborTech SimpleQuote
 
+**A free, open-source CRM that turns Google Sheets and Google Calendar into a practical customer, booking, quoting, and invoicing system for small businesses.**
+
+> Project status: working MVP undergoing live Google Sheets and Calendar testing.
+
 A free, Google Sheets-backed small-business workflow that combines:
 
 **Lead → Booking → Quote → Invoice → Payment tracking**
+
+## Why this project exists
+
+NeighborTech SimpleQuote helps small businesses manage customer inquiries, appointments, quotes, and invoices without starting with an expensive CRM subscription. Each business controls its own Google Sheet and Google Calendar connection, while the project remains reusable and customizable.
+
+Many independent businesses need more than a contact form but do not need the cost or complexity of a large CRM. NeighborTech SimpleQuote brings the everyday workflow together in one place: capture a website inquiry or phone call, create or match the customer, check real calendar availability, book an appointment, build a quote from saved products and services, convert an accepted quote into an invoice, and follow the customer’s history from first contact through payment.
+
+The project is designed around ownership and accessibility. Business data stays in the business owner’s Google Sheet, appointments connect to their Google Calendar, and the interface can be adapted for different services, prices, terminology, branding, and workflows. The goal is to give local service providers, consultants, freelancers, tradespeople, and community businesses a useful starting point they can understand, operate, and extend without being locked into a monthly software subscription.
+
+## Search keywords
+
+`free CRM` · `open-source CRM` · `Google Sheets CRM` · `small-business CRM` · `booking system` · `appointment scheduling` · `Google Calendar booking` · `quote software` · `estimate software` · `invoice software` · `customer management` · `lead management` · `service-business software` · `Google Apps Script` · `JavaScript CRM`
 
 This MVP combines and extends three Neighbor Tech projects:
 
@@ -31,6 +47,9 @@ This MVP combines and extends three Neighbor Tech projects:
 - Business settings wizard
 - Installable PWA shell
 - One isolated Google Sheet per business
+- Smart Notes Assistant with editable extraction of customer, service, preferred date, and budget
+- Browser-based Hugging Face service matching with no paid API or exposed token
+- One-click creation of a customer, lead, booking, or draft quote from reviewed notes
 
 ## Try the demo before connecting Google
 
@@ -40,7 +59,7 @@ The dashboard includes a browser-only demo mode with sample data. Serve the `web
 app.html?demo=1
 ```
 
-Demo mode lets you explore leads, bookings, quote requests, quotes, invoices, pre-filled quote creation, and editing. Nothing is sent to Google and changes reset when the page refreshes.
+Demo mode lets you explore leads, bookings, quote requests, quotes, invoices, pre-filled quote creation, and the Smart Notes Assistant. Nothing is sent to Google and changes reset when the page refreshes.
 
 Opening `app.html` without `?demo=1` starts connected mode and requires the Apps Script settings described below.
 
@@ -55,7 +74,7 @@ Public quote request ───┘            │                   │
 Private dashboard <────────────────────────────────────────┘
 ```
 
-The Google Sheet is the pilot database. Hugging Face AI is deliberately not required by this MVP; it will be added after the operational workflow is reliable.
+The Google Sheet is the pilot database. The optional Smart Notes Assistant runs a Hugging Face model in the visitor's browser to match notes with the service catalog. Contact details, dates, and budgets are extracted locally, all results remain editable, and a built-in fallback keeps the workflow usable if the model cannot load.
 
 ## Install
 
@@ -156,7 +175,7 @@ Dashboard reads and writes require the Apps Script `ADMIN_KEY`. This is an MVP p
 - Quote requests still use the original JSONP submission flow.
 - Customer records are embedded in source records and documents; a dedicated Customers module is next.
 - Payment tracking uses an aggregate paid amount rather than a payment ledger.
-- Expenses, mileage, reporting, and AI are roadmap items.
+- Expenses, mileage, reporting, and additional AI workflows are roadmap items.
 - Existing lead and booking rows must receive unique IDs before they can be converted from the dashboard.
 
 ## Migrating existing lead and booking rows
