@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeighborTech SimpleQuote</title>
+
+<!-- PWA: lets this be "Added to Home Screen" as an installable app -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SimpleQuote">
+
+<style>
+  :root {
+    --primary-color: #2563eb;
+    --secondary-color: #4b5563;
+    --background-color: #f3f4f6;
+    --card-color: #ffffff;
+    --text-color: #111827;
+    --muted-color: #6b7280;
+    --border-color: #e5e7eb;
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --danger-color: #dc2626;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--background-color);
+    color: var(--text-color);
+  }
+  header {
+    background: var(--card-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  nav { display: flex; gap: 8px; }
+  nav button {
+    background: none; border: none; padding: 8px 14px; font-size: 14px;
+    font-weight: 600; color: var(--muted-color); cursor: pointer; border-radius: var(--radius);
+  }
+  nav button.active { background: var(--primary-color); color: white; }
+  .header-actions { display: flex; gap: 10px; }
+  main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .card {
+    background: var(--card-color); border: 1px solid var(--border-color);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-color); }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted-color); }
+  tr:hover td { background: #fafafa; cursor: pointer; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  }
+  .badge-draft { background: #e5e7eb; color: #374151; }
+  .badge-sent { background: #dbeafe; color: #1e40af; }
+  .badge-accepted, .badge-paid { background: #d1fae5; color: #065f46; }
+  .badge-declined, .badge-void { background: #fee2e2; color: #991b1b; }
+  .badge-expired, .badge-overdue { background: #fef3c7; color: #92400e; }
+  .badge-unpaid, .badge-partially-paid { background: #fef3c7; color: #92400e; }
+  button.btn {
+    font-family: inherit; font-size: 14px; font-weight: 600; padding: 9px 16px;
+    border-radius: var(--radius); border: 1px solid var(--border-color); background: white; cursor: pointer;
+  }
+  button.btn:hover { background: #f9fafb; }
+  button.btn-primary { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+  button.btn-primary:hover { filter: brightness(0.95); }
+  button.btn.btn-primary:hover, button.btn.btn-primary:focus-visible {
+    background: #1d4ed8; color: #ffffff; border-color: #1d4ed8;
+  }
+  button.btn-success { background: var(--success-color); color: white; border-color: var(--success-color); }
+  button.btn-danger { color: var(--danger-color); border-color: #fecaca; }
+  button.btn-small { padding: 5px 10px; font-size: 12px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .field { margin-bottom: 14px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  input, select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border-color);
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .items-table th, .items-table td { padding: 6px 4px; }
+  .items-table input { padding: 6px 8px; font-size: 13px; }
+  .items-table .col-desc { width: 40%; }
+  .items-table .col-qty, .items-table .col-rate, .items-table .col-amount { width: 14%; }
+  .items-table .col-tax { width: 8%; text-align: center; }
+  .totals-box { max-width: 320px; margin-left: auto; font-size: 14px; }
+  .totals-box .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .totals-box .row.total { font-weight: 700; font-size: 16px; border-top: 1px solid var(--border-color); margin-top: 6px; padding-top: 8px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted-color); }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .form-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .status-line { font-size: 13px; margin-top: 10px; }
+  .status-line.error { color: var(--danger-color); }
+  .status-line.success { color: var(--success-color); }
+  .hint { font-size: 12px; color: var(--muted-color); margin-top: 2px; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: white; border-radius: var(--radius); padding: 24px; max-width: 400px; width: 90%; }
+  .modal-box .form-actions { justify-content: flex-end; }
+  .calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border:1px solid var(--border-color); border-radius:var(--radius); overflow:hidden; }
+  .calendar-weekday { padding:8px; background:#f8fafc; color:var(--muted-color); font-size:11px; font-weight:700; text-transform:uppercase; text-align:center; }
+  .calendar-day { min-height:112px; padding:7px; border-top:1px solid var(--border-color); border-right:1px solid var(--border-color); background:white; }
+  .calendar-day:nth-child(7n) { border-right:0; }
+  .calendar-day.outside { background:#f8fafc; color:#94a3b8; }
+  .calendar-date { font-size:12px; font-weight:700; margin-bottom:5px; }
+  .calendar-event { display:block; width:100%; border:0; border-left:3px solid var(--primary-color); background:#eff6ff; color:#1e3a8a; text-align:left; border-radius:4px; padding:5px 6px; margin:3px 0; font-size:11px; line-height:1.25; cursor:pointer; }
+  .filter-row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+  .filter-row .field { margin:0; min-width:180px; }
+  @media (max-width:760px) {
+    header { align-items:flex-start; gap:10px; flex-wrap:wrap; }
+    nav { overflow-x:auto; width:100%; order:3; }
+    .header-actions { overflow-x:auto; width:100%; }
+    main { padding:14px; }
+    .calendar-grid { grid-template-columns:1fr; border:0; gap:8px; }
+    .calendar-weekday, .calendar-day.outside { display:none; }
+    .calendar-day { min-height:auto; border:1px solid var(--border-color); border-radius:6px; }
+    .calendar-day:not(:has(.calendar-event)) { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NeighborTech SimpleQuote</h1>
+  <nav>
+    <button data-view="customers">Customers</button>
+    <button data-view="leads" class="active">Leads</button>
+    <button data-view="bookings">Bookings</button>
+    <button data-view="catalog">Products &amp; Services</button>
+    <button data-view="requests">Quote Requests</button>
+    <button data-view="quotes">Quotes</button>
+    <button data-view="invoices">Invoices</button>
+  </nav>
+  <div class="header-actions">
+    <button class="btn" id="phone-inquiry-btn">+ Phone Inquiry</button>
+    <button class="btn" id="new-customer-btn">+ Customer</button>
+    <button class="btn btn-primary" id="new-quote-btn">+ New Quote</button>
+    <button class="btn" id="new-invoice-btn">+ New Invoice</button>
+    <a class="btn" id="settings-link" href="settings-wizard.html" style="text-decoration:none;display:inline-flex;align-items:center;">Settings</a>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <p id="confirm-message"></p>
+    <div class="form-actions">
+      <button class="btn" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  // CONFIG
+  // ─────────────────────────────────────────────────────────
+  const CONFIG = {
+    apiUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+    adminKey: "PASTE_YOUR_PRIVATE_ADMIN_KEY_HERE"
+  };
+  // ─────────────────────────────────────────────────────────
+
+  const DEMO_MODE = new URLSearchParams(location.search).get('demo') === '1';
+  const demoNow = new Date();
+  const demoState = {
+    leads: [
+      { Lead_ID: 'LEAD-DEMO-1', Timestamp: demoNow.toISOString(), Name: 'Maria Johnson', Email: 'maria@example.com', Phone: '555-0101', 'Service Interested': 'Home Wi-Fi help', Message: 'Wi-Fi is weak upstairs.', Status: 'New' },
+      { Lead_ID: 'LEAD-DEMO-2', Timestamp: new Date(demoNow - 86400000).toISOString(), Name: 'James Carter', Email: 'james@example.com', Phone: '555-0102', 'Service Interested': 'Smart TV setup', Message: 'Need two TVs connected.', Status: 'Contacted' }
+    ],
+    bookings: [
+      { Booking_ID: 'BKG-DEMO-1', Timestamp: demoNow.toISOString(), Name: 'Linda Perez', Email: 'linda@example.com', Phone: '555-0103', Service: 'Technology Help Visit', 'Appointment Time': new Date(demoNow.getTime() + 172800000).toISOString(), Address: '123 Main Street', Notes: 'Router and printer', Status: 'Confirmed' }
+    ],
+    requests: [{ Request_ID: 'REQ-DEMO-1', Timestamp: demoNow.toISOString(), Name: 'Robert Green', Email: 'robert@example.com', Phone: '555-0104', 'What do you need?': 'Computer tune-up', Details: 'Laptop is running slowly.', Status: 'New' }],
+    quotes: [{ Quote_ID: 'Q-DEMO-1', Quote_Number: 'Q-2026-0001', Customer_Name: 'James Carter', Customer_Email: 'james@example.com', Customer_Phone: '555-0102', Status: 'Sent', Created_Date: demoNow.toISOString(), Expiration_Date: new Date(demoNow.getTime() + 2592000000).toISOString(), Subtotal: 170, Discount: 0, Tax: 14.45, Total: 184.45, Notes: 'Set up two smart TVs', Terms: '', Created_At: demoNow.toISOString(), items: [{ Description: 'Smart TV setup', Quantity: 2, Rate: 85, Amount: 170, Taxable: true }] }],
+    invoices: [{ Invoice_ID: 'INV-DEMO-1', Invoice_Number: 'INV-2026-0001', Customer_Name: 'Susan Lee', Customer_Email: 'susan@example.com', Customer_Phone: '555-0105', Status: 'Partially Paid', Created_Date: demoNow.toISOString(), Due_Date: new Date(demoNow.getTime() + 1209600000).toISOString(), Subtotal: 300, Discount: 0, Tax: 25.5, Total: 325.5, Amount_Paid: 150, Balance_Due: 175.5, Payment_Method: 'Venmo', Notes: 'Router replacement', Payment_Instructions: 'Pay by check or Venmo.', Created_At: demoNow.toISOString(), items: [{ Description: 'Router replacement and setup', Quantity: 1, Rate: 300, Amount: 300, Taxable: true }] }]
+  };
+  demoState.customers = [
+    { Customer_ID: 'CUST-DEMO-1', Name: 'Maria Johnson', Company: '', Email: 'maria@example.com', Phone: '555-0101', Address: '', Source: 'Lead form', Notes: '', Created_At: demoNow.toISOString(), Active: true },
+    { Customer_ID: 'CUST-DEMO-2', Name: 'James Carter', Company: '', Email: 'james@example.com', Phone: '555-0102', Address: '', Source: 'Lead form', Notes: '', Created_At: demoNow.toISOString(), Active: true },
+    { Customer_ID: 'CUST-DEMO-3', Name: 'Linda Perez', Company: '', Email: 'linda@example.com', Phone: '555-0103', Address: '123 Main Street', Source: 'Booking form', Notes: '', Created_At: demoNow.toISOString(), Active: true },
+    { Customer_ID: 'CUST-DEMO-4', Name: 'Susan Lee', Company: '', Email: 'susan@example.com', Phone: '555-0105', Address: '', Source: 'Manual', Notes: 'Prefers text messages.', Created_At: demoNow.toISOString(), Active: true }
+  ];
+  demoState.leads[0].Customer_ID = 'CUST-DEMO-1'; demoState.leads[1].Customer_ID = 'CUST-DEMO-2';
+  demoState.bookings[0].Customer_ID = 'CUST-DEMO-3'; demoState.quotes[0].Customer_ID = 'CUST-DEMO-2'; demoState.invoices[0].Customer_ID = 'CUST-DEMO-4';
+  demoState.catalog = [
+    { Item_ID: 'ITEM-DEMO-1', Name: 'Technology Help Visit', Description: 'In-home technology troubleshooting and support', Type: 'Service', Unit: 'hour', Duration_Minutes: 60, Rate: 85, Taxable: true, Active: true },
+    { Item_ID: 'ITEM-DEMO-2', Name: 'Smart TV Setup', Description: 'Connect and configure one smart TV', Type: 'Service', Unit: 'each', Duration_Minutes: 45, Rate: 85, Taxable: true, Active: true },
+    { Item_ID: 'ITEM-DEMO-3', Name: 'Wi-Fi Router', Description: 'Dual-band home Wi-Fi router', Type: 'Product', Unit: 'each', Duration_Minutes: 0, Rate: 129, Taxable: true, Active: true }
+  ];
+
+  function demoApi(action, params) {
+    const clone = value => JSON.parse(JSON.stringify(value));
+    if (action === 'list_leads') return { success: true, data: clone(demoState.leads) };
+    if (action === 'list_customers') return { success: true, data: clone(demoState.customers) };
+    if (action === 'get_customer_history') {
+      const customer = demoState.customers.find(c => c.Customer_ID === params.id);
+      return { success: true, data: { customer: clone(customer), leads: clone(demoState.leads.filter(x => x.Customer_ID === params.id)), bookings: clone(demoState.bookings.filter(x => x.Customer_ID === params.id)), quotes: clone(demoState.quotes.filter(x => x.Customer_ID === params.id)), invoices: clone(demoState.invoices.filter(x => x.Customer_ID === params.id)) } };
+    }
+    if (action === 'save_customer') {
+      const p = JSON.parse(decodeURIComponent(params.data)); let customer = demoState.customers.find(c => c.Customer_ID === p.id);
+      if (!customer) { customer = { Customer_ID: 'CUST-DEMO-' + Date.now(), Created_At: demoNow.toISOString(), Active: true }; demoState.customers.push(customer); }
+      Object.assign(customer, { Name: p.name, Company: p.company, Email: p.email, Phone: p.phone, Address: p.address, Source: p.source || 'Manual', Notes: p.notes }); return { success: true, data: clone(customer) };
+    }
+    if (action === 'save_phone_inquiry') {
+      const p = JSON.parse(decodeURIComponent(params.data)); let customer = demoState.customers.find(c => (p.customer.email && c.Email === p.customer.email) || (p.customer.phone && c.Phone === p.customer.phone));
+      if (!customer) { customer = { Customer_ID: 'CUST-DEMO-' + Date.now(), Name: p.customer.name, Company: p.customer.company, Email: p.customer.email, Phone: p.customer.phone, Address: p.customer.address, Source: 'Phone call', Notes: p.customer.notes, Created_At: demoNow.toISOString(), Active: true }; demoState.customers.push(customer); }
+      const lead = { Lead_ID: 'LEAD-DEMO-' + Date.now(), Customer_ID: customer.Customer_ID, Timestamp: demoNow.toISOString(), Name: customer.Name, Email: customer.Email, Phone: customer.Phone, 'Service Interested': p.service, Message: p.notes, Status: 'New', 'Source Page': 'Phone call' }; demoState.leads.unshift(lead); return { success: true, data: { customer: clone(customer), leadId: lead.Lead_ID } };
+    }
+    if (action === 'services') return { services: [{ name: 'Technology Help Visit', durationMinutes: 60, requiresAddress: true }, { name: 'Smart TV Setup', durationMinutes: 45, requiresAddress: true }] };
+    if (action === 'availability') {
+      const slots = []; for (let day = 1; day <= 10; day++) { const start = new Date(demoNow.getFullYear(), demoNow.getMonth(), demoNow.getDate() + day, 10, 0, 0); slots.push({ startIso: start.toISOString(), endIso: new Date(start.getTime() + 3600000).toISOString(), label: start.toLocaleString([], { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) }); }
+      return { slots };
+    }
+    if (action === 'create_owner_booking') {
+      const p = JSON.parse(decodeURIComponent(params.data)); const customer = demoState.customers.find(c => c.Customer_ID === p.customerId); if (!customer) return { success:false, error:'Choose a customer.' };
+      const booking = { Booking_ID: 'BKG-DEMO-' + Date.now(), Customer_ID: customer.Customer_ID, Timestamp: demoNow.toISOString(), Name: customer.Name, Phone: customer.Phone, Email: customer.Email, Service: p.service, 'Appointment Time': p.slotStart, Address: p.address || customer.Address, Notes: p.notes, Status: 'Confirmed', 'Source Page': 'CRM dashboard' }; demoState.bookings.push(booking); return { success:true, data:clone(booking) };
+    }
+    if (action === 'list_bookings') return { success: true, data: clone(demoState.bookings) };
+    if (action === 'list_requests') return { success: true, data: clone(demoState.requests) };
+    if (action === 'list_quotes') return { success: true, data: clone(demoState.quotes) };
+    if (action === 'list_invoices') return { success: true, data: clone(demoState.invoices) };
+    if (action === 'list_catalog') return { success: true, data: clone(demoState.catalog.filter(i => i.Active)) };
+    if (action === 'save_catalog_item') {
+      const p = JSON.parse(decodeURIComponent(params.data)); let item = demoState.catalog.find(i => i.Item_ID === p.id);
+      if (!item) { item = { Item_ID: 'ITEM-DEMO-' + Date.now() }; demoState.catalog.push(item); }
+      Object.assign(item, { Name: p.name, Description: p.description, Type: p.type, Unit: p.unit, Duration_Minutes: p.durationMinutes, Rate: p.rate, Taxable: p.taxable, Active: true }); return { success: true, data: clone(item) };
+    }
+    if (action === 'archive_catalog_item') { const item = demoState.catalog.find(i => i.Item_ID === params.id); if (item) item.Active = false; return { success: true, data: { archived: true } }; }
+    if (action === 'get_quote') return { success: true, data: clone(demoState.quotes.find(q => q.Quote_ID === params.id)) };
+    if (action === 'get_invoice') return { success: true, data: clone(demoState.invoices.find(i => i.Invoice_ID === params.id)) };
+    if (action === 'create_quote_from_source') {
+      const source = params.sourceType === 'Booking' ? demoState.bookings.find(x => x.Booking_ID === params.sourceId) : demoState.leads.find(x => x.Lead_ID === params.sourceId);
+      const quote = { Quote_ID: 'Q-DEMO-' + Date.now(), Customer_ID: source.Customer_ID || '', Quote_Number: 'Q-2026-' + String(demoState.quotes.length + 2).padStart(4, '0'), Customer_Name: source.Name, Customer_Email: source.Email, Customer_Phone: source.Phone, Source_Type: params.sourceType, Source_Reference: params.sourceId, Status: 'Draft', Created_Date: demoNow.toISOString(), Expiration_Date: new Date(demoNow.getTime() + 2592000000).toISOString(), Discount: 0, Notes: params.sourceType === 'Booking' ? ((source.Service || '') + '\n' + (source.Notes || '')) : (source.Message || ''), Terms: '', Created_At: demoNow.toISOString(), items: [] };
+      demoState.quotes.unshift(quote); return { success: true, data: clone(quote) };
+    }
+    if (action === 'create_quote_from_request') {
+      const source = demoState.requests.find(x => x.Request_ID === params.requestId);
+      source.Status = 'Converted';
+      const quote = { Quote_ID: 'Q-DEMO-' + Date.now(), Quote_Number: 'Q-2026-' + String(demoState.quotes.length + 2).padStart(4, '0'), Customer_Name: source.Name, Customer_Email: source.Email, Customer_Phone: source.Phone, Source_Type: 'Request', Source_Reference: source.Request_ID, Status: 'Draft', Created_Date: demoNow.toISOString(), Expiration_Date: new Date(demoNow.getTime() + 2592000000).toISOString(), Discount: 0, Notes: source.Details || '', Terms: '', Created_At: demoNow.toISOString(), items: [] };
+      demoState.quotes.unshift(quote); return { success: true, data: clone(quote) };
+    }
+    if (action === 'save_quote') {
+      const p = JSON.parse(decodeURIComponent(params.data));
+      let quote = demoState.quotes.find(q => q.Quote_ID === p.id);
+      if (!quote) { quote = { Quote_ID: 'Q-DEMO-' + Date.now(), Quote_Number: 'Q-2026-' + String(demoState.quotes.length + 2).padStart(4, '0'), Created_At: demoNow.toISOString() }; demoState.quotes.unshift(quote); }
+      const subtotal = p.items.reduce((sum, item) => sum + item.quantity * item.rate, 0); const tax = p.items.filter(i => i.taxable).reduce((sum, item) => sum + item.quantity * item.rate, 0) * .085;
+      Object.assign(quote, { Customer_ID: p.customerId || '', Customer_Name: p.customerName, Customer_Email: p.customerEmail, Customer_Phone: p.customerPhone, Status: p.status, Notes: p.notes, Terms: p.terms, Discount: p.discount, Created_Date: p.createdDate || demoNow.toISOString(), Expiration_Date: p.expirationDate, Subtotal: subtotal, Tax: tax, Total: subtotal - p.discount + tax, items: p.items.map(i => ({ Description: i.description, Quantity: i.quantity, Rate: i.rate, Amount: i.quantity * i.rate, Taxable: i.taxable })) });
+      return { success: true, data: clone(quote) };
+    }
+    if (action === 'convert_to_invoice') {
+      const q = demoState.quotes.find(x => x.Quote_ID === params.quoteId); const invoice = Object.assign({}, q, { Invoice_ID: 'INV-DEMO-' + Date.now(), Invoice_Number: 'INV-2026-' + String(demoState.invoices.length + 2).padStart(4, '0'), Source_Quote_ID: q.Quote_ID, Status: 'Draft', Due_Date: new Date(demoNow.getTime() + 1209600000).toISOString(), Amount_Paid: 0, Balance_Due: q.Total }); delete invoice.Quote_ID; delete invoice.Quote_Number; demoState.invoices.unshift(invoice); return { success: true, data: clone(invoice) };
+    }
+    if (action === 'save_invoice') {
+      const p = JSON.parse(decodeURIComponent(params.data));
+      let invoice = demoState.invoices.find(i => i.Invoice_ID === p.id);
+      if (!invoice) { invoice = { Invoice_ID: 'INV-DEMO-' + Date.now(), Invoice_Number: 'INV-2026-' + String(demoState.invoices.length + 2).padStart(4, '0'), Created_At: demoNow.toISOString() }; demoState.invoices.unshift(invoice); }
+      const subtotal = p.items.reduce((sum, item) => sum + item.quantity * item.rate, 0); const tax = p.items.filter(i => i.taxable).reduce((sum, item) => sum + item.quantity * item.rate, 0) * .085; const total = subtotal - p.discount + tax;
+      Object.assign(invoice, { Customer_ID: p.customerId || '', Customer_Name: p.customerName, Customer_Email: p.customerEmail, Customer_Phone: p.customerPhone, Source_Quote_ID: p.sourceQuoteId || '', Status: p.amountPaid >= total ? 'Paid' : (p.amountPaid > 0 ? 'Partially Paid' : 'Draft'), Created_Date: p.createdDate || demoNow.toISOString(), Due_Date: p.dueDate, Subtotal: subtotal, Discount: p.discount, Tax: tax, Total: total, Amount_Paid: p.amountPaid, Balance_Due: total - p.amountPaid, Payment_Method: p.paymentMethod, Notes: p.notes, Payment_Instructions: p.paymentInstructions, items: p.items.map(i => ({ Description: i.description, Quantity: i.quantity, Rate: i.rate, Amount: i.quantity * i.rate, Taxable: i.taxable })) });
+      return { success: true, data: clone(invoice) };
+    }
+    return { success: false, error: 'This action is not included in demo mode yet.' };
+  }
+
+  const mainEl = document.getElementById('main');
+  let currentView = 'leads';
+  let quotesCache = [];
+  let invoicesCache = [];
+  let bookingMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let bookingViewMode = 'calendar';
+
+  // ---- JSONP: every call to Apps Script (read AND write) goes
+  // through here, avoiding CORS entirely. ----
+  let jsonpCounter = 0;
+  function callApi(action, params) {
+    if (DEMO_MODE) return Promise.resolve(demoApi(action, params || {}));
+    return new Promise((resolve) => {
+      const callbackName = 'sqCallback' + (jsonpCounter++);
+      window[callbackName] = function (result) {
+        delete window[callbackName];
+        script.remove();
+        resolve(result);
+      };
+      const query = Object.assign({ action, callback: callbackName, adminKey: CONFIG.adminKey }, params || {});
+      const queryString = Object.keys(query).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(query[k])).join('&');
+      const script = document.createElement('script');
+      script.src = CONFIG.apiUrl + '?' + queryString;
+      script.onerror = function () {
+        delete window[callbackName];
+        resolve({ success: false, error: 'Could not reach the server. Check your Apps Script URL and that it is deployed.' });
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  if (DEMO_MODE) {
+    document.getElementById('settings-link').href = 'settings-wizard.html?demo=1';
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#fff7ed;color:#9a3412;padding:10px 20px;text-align:center;font-weight:600;border-bottom:1px solid #fed7aa';
+    banner.textContent = 'Demo mode — sample data only. Changes disappear when you refresh.';
+    document.querySelector('header').insertAdjacentElement('afterend', banner);
+  }
+
+  function saveQuoteData(payload) {
+    return callApi('save_quote', { data: encodeURIComponent(JSON.stringify(payload)) });
+  }
+  function saveInvoiceData(payload) {
+    return callApi('save_invoice', { data: encodeURIComponent(JSON.stringify(payload)) });
+  }
+
+  // ---- Helpers ----
+  function formatMoney(n) {
+    return '$' + Number(n || 0).toFixed(2);
+  }
+  function formatDate(d) {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date)) return String(d);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function badgeClass(status) {
+    return 'badge badge-' + String(status || '').toLowerCase().replace(/\s+/g, '-');
+  }
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>'"]/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[c]);
+  }
+  function el(tag, props, children) {
+    const e = document.createElement(tag);
+    Object.assign(e, props || {});
+    (children || []).forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+    return e;
+  }
+
+  function confirmDialog(message) {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('confirm-modal');
+      document.getElementById('confirm-message').textContent = message;
+      overlay.classList.add('open');
+      function cleanup(result) {
+        overlay.classList.remove('open');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+        resolve(result);
+      }
+      const okBtn = document.getElementById('confirm-ok');
+      const cancelBtn = document.getElementById('confirm-cancel');
+      function onOk() { cleanup(true); }
+      function onCancel() { cleanup(false); }
+      okBtn.addEventListener('click', onOk);
+      cancelBtn.addEventListener('click', onCancel);
+    });
+  }
+
+  async function renderCustomersList() {
+    mainEl.textContent = '';
+    mainEl.appendChild(el('p', { className: 'hint' }, ['Loading customers...']));
+    const result = await callApi('list_customers');
+    if (!result.success) { mainEl.textContent = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    mainEl.textContent = '';
+    const card = el('div', { className: 'card' });
+    const toolbar = el('div', { className: 'toolbar' });
+    toolbar.appendChild(el('div', {}, [el('h2', { style: 'margin:0;font-size:18px' }, ['Customers']), el('p', { className: 'hint' }, ['One contact record connected to every inquiry, booking, quote, and invoice.'])]));
+    const add = el('button', { className: 'btn btn-primary' }, ['+ Add Customer']); add.addEventListener('click', () => renderCustomerEditor()); toolbar.appendChild(add); card.appendChild(toolbar);
+    if (!result.data.length) card.appendChild(el('div', { className: 'empty-state' }, ['No customers yet. Add someone who called, or submit a lead/booking form.']));
+    else {
+      const table = el('table'); const header = el('tr'); ['Name', 'Phone', 'Email', 'Source'].forEach(x => header.appendChild(el('th', {}, [x]))); table.appendChild(header);
+      result.data.forEach(customer => { const row = el('tr'); [customer.Name, customer.Phone, customer.Email, customer.Source].forEach(value => row.appendChild(el('td', {}, [String(value || '')]))); row.addEventListener('click', () => renderCustomerProfile(customer.Customer_ID)); table.appendChild(row); }); card.appendChild(table);
+    }
+    mainEl.appendChild(card);
+  }
+
+  async function renderCustomerEditor(customer) {
+    customer = customer || {};
+    mainEl.textContent = '';
+    const card = el('div', { className: 'card' });
+    const toolbar = el('div', { className: 'toolbar' }, [el('h2', { style: 'margin:0;font-size:18px' }, [customer.Customer_ID ? 'Edit Customer' : 'Add Customer'])]);
+    const back = el('button', { className: 'btn btn-small' }, ['← Customers']); back.addEventListener('click', renderCustomersList); toolbar.appendChild(back); card.appendChild(toolbar);
+    const name = textField('Name', customer.Name); const company = textField('Business / Company', customer.Company); const email = textField('Email', customer.Email, '', 'email'); const phone = textField('Phone', customer.Phone, '', 'tel'); const address = textareaField('Address', customer.Address); const notes = textareaField('Customer notes', customer.Notes);
+    card.appendChild(el('div', { className: 'field-row' }, [name.wrapper, company.wrapper])); card.appendChild(el('div', { className: 'field-row' }, [phone.wrapper, email.wrapper])); card.appendChild(address.wrapper); card.appendChild(notes.wrapper);
+    const status = el('p', { className: 'status-line' }); const save = el('button', { className: 'btn btn-primary' }, ['Save Customer']);
+    save.addEventListener('click', async () => { if (!name.input.value.trim()) { status.textContent = 'Name is required.'; status.className = 'status-line error'; name.input.focus(); return; } save.disabled = true; save.textContent = 'Saving...'; const result = await callApi('save_customer', { data: encodeURIComponent(JSON.stringify({ id: customer.Customer_ID, name: name.input.value, company: company.input.value, phone: phone.input.value, email: email.input.value, address: address.textarea.value, notes: notes.textarea.value, source: customer.Source || 'Manual' })) }); if (result.success) renderCustomerProfile(result.data.Customer_ID); else { save.disabled = false; save.textContent = 'Save Customer'; status.textContent = result.error; status.className = 'status-line error'; } });
+    card.appendChild(save); card.appendChild(status); mainEl.appendChild(card);
+  }
+
+  function historySection(title, rows, formatter) {
+    const section = el('div', { style: 'margin-top:20px' }); section.appendChild(el('h3', { style: 'font-size:15px;margin-bottom:8px' }, [title]));
+    if (!rows.length) section.appendChild(el('p', { className: 'hint' }, ['No ' + title.toLowerCase() + ' yet.']));
+    else rows.forEach(row => section.appendChild(el('div', { style: 'padding:10px 0;border-bottom:1px solid var(--border-color)' }, [formatter(row)])));
+    return section;
+  }
+
+  async function renderCustomerProfile(customerId) {
+    mainEl.textContent = ''; mainEl.appendChild(el('p', { className: 'hint' }, ['Loading customer history...']));
+    const result = await callApi('get_customer_history', { id: customerId });
+    if (!result.success) { mainEl.textContent = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    const data = result.data, customer = data.customer; mainEl.textContent = '';
+    const card = el('div', { className: 'card' }); const toolbar = el('div', { className: 'toolbar' }); toolbar.appendChild(el('div', {}, [el('h2', { style: 'margin:0;font-size:20px' }, [customer.Name]), el('p', { className: 'hint' }, [[customer.Phone, customer.Email].filter(Boolean).join(' · ') || 'No contact information'].flat())]));
+    const edit = el('button', { className: 'btn' }, ['Edit']); edit.addEventListener('click', () => renderCustomerEditor(customer)); toolbar.appendChild(edit); card.appendChild(toolbar);
+    if (customer.Company) card.appendChild(el('p', {}, ['Business: ' + customer.Company])); if (customer.Address) card.appendChild(el('p', {}, ['Address: ' + customer.Address])); if (customer.Notes) card.appendChild(el('p', {}, ['Notes: ' + customer.Notes]));
+    const actions = el('div', { className: 'form-actions' }); const quote = el('button', { className: 'btn btn-primary' }, ['Create Quote']); quote.addEventListener('click', () => renderQuoteEditor(null, customer)); const invoice = el('button', { className: 'btn' }, ['Create Invoice']); invoice.addEventListener('click', () => renderInvoiceEditor(null, customer)); actions.appendChild(quote); actions.appendChild(invoice); card.appendChild(actions);
+    card.appendChild(historySection('Leads', data.leads, row => el('span', {}, [formatDate(row.Timestamp) + ' — ' + (row['Service Interested'] || row.Message || 'Inquiry') + ' (' + (row.Status || '') + ')'])));
+    card.appendChild(historySection('Bookings', data.bookings, row => el('span', {}, [formatDate(row['Appointment Time']) + ' — ' + (row.Service || 'Booking') + ' (' + (row.Status || '') + ')'])));
+    card.appendChild(historySection('Quotes', data.quotes, row => el('button', { className: 'btn btn-small' }, [(row.Quote_Number || 'Quote') + ' — ' + formatMoney(row.Total)])));
+    card.appendChild(historySection('Invoices', data.invoices, row => el('span', {}, [(row.Invoice_Number || 'Invoice') + ' — ' + formatMoney(row.Balance_Due) + ' due'])));
+    mainEl.appendChild(card);
+  }
+
+  function renderPhoneInquiry() {
+    mainEl.textContent = ''; const card = el('div', { className: 'card' });
+    const toolbar = el('div', { className: 'toolbar' }, [el('div', {}, [el('h2', { style: 'margin:0;font-size:18px' }, ['Add Phone Inquiry']), el('p', { className: 'hint' }, ['Capture the caller and what they need in one step.'])])]); const back = el('button', { className: 'btn btn-small' }, ['← Back']); back.addEventListener('click', renderCustomersList); toolbar.appendChild(back); card.appendChild(toolbar);
+    const name = textField('Name', ''); const phone = textField('Phone', '', '', 'tel'); const email = textField('Email', '', '', 'email'); const company = textField('Business / Company', ''); const service = textField('What do they need?', ''); const notes = textareaField('Call notes', ''); const followUp = textField('Follow-up date', '', '', 'date');
+    card.appendChild(el('div', { className: 'field-row' }, [name.wrapper, phone.wrapper])); card.appendChild(el('div', { className: 'field-row' }, [email.wrapper, company.wrapper])); card.appendChild(service.wrapper); card.appendChild(notes.wrapper); card.appendChild(followUp.wrapper);
+    const status = el('p', { className: 'status-line' }); const save = el('button', { className: 'btn btn-primary' }, ['Save Inquiry']); save.addEventListener('click', async () => { if (!name.input.value.trim()) { status.textContent = 'Name is required.'; status.className = 'status-line error'; name.input.focus(); return; } save.disabled = true; save.textContent = 'Saving...'; const result = await callApi('save_phone_inquiry', { data: encodeURIComponent(JSON.stringify({ customer: { name: name.input.value, phone: phone.input.value, email: email.input.value, company: company.input.value, source: 'Phone call' }, service: service.input.value, notes: notes.textarea.value, followUpDate: followUp.input.value })) }); if (result.success) renderCustomerProfile(result.data.customer.Customer_ID); else { save.disabled = false; save.textContent = 'Save Inquiry'; status.textContent = result.error; status.className = 'status-line error'; } }); card.appendChild(save); card.appendChild(status); mainEl.appendChild(card);
+  }
+
+  async function renderBookingsWorkspace() {
+    mainEl.textContent = ''; mainEl.appendChild(el('p', { className: 'hint' }, ['Loading bookings...']));
+    const result = await callApi('list_bookings');
+    if (!result.success) { mainEl.textContent = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    const bookings = result.data; mainEl.textContent = '';
+    const card = el('div', { className: 'card' }); const toolbar = el('div', { className: 'toolbar' });
+    const heading = el('div', {}, [el('h2', { style: 'margin:0;font-size:18px' }, ['Booking Calendar']), el('p', { className: 'hint' }, ['Review appointments, filter the schedule, or book while speaking with a customer.'])]); toolbar.appendChild(heading);
+    const book = el('button', { className: 'btn btn-primary' }, ['+ Book Appointment']); book.addEventListener('click', renderOwnerBooking); toolbar.appendChild(book); card.appendChild(toolbar);
+    const controls = el('div', { className: 'filter-row', style: 'margin-bottom:16px' });
+    const previous = el('button', { className: 'btn', title: 'Previous month', ariaLabel: 'Previous month' }, ['←']); const today = el('button', { className: 'btn' }, ['Today']); const next = el('button', { className: 'btn', title: 'Next month', ariaLabel: 'Next month' }, ['→']);
+    const monthLabel = el('strong', { style: 'min-width:150px;text-align:center;font-size:16px' }, [bookingMonth.toLocaleDateString([], { month:'long', year:'numeric' })]);
+    previous.addEventListener('click', () => { bookingMonth = new Date(bookingMonth.getFullYear(), bookingMonth.getMonth() - 1, 1); renderBookingsWorkspace(); });
+    next.addEventListener('click', () => { bookingMonth = new Date(bookingMonth.getFullYear(), bookingMonth.getMonth() + 1, 1); renderBookingsWorkspace(); });
+    today.addEventListener('click', () => { const now = new Date(); bookingMonth = new Date(now.getFullYear(), now.getMonth(), 1); renderBookingsWorkspace(); });
+    controls.appendChild(previous); controls.appendChild(monthLabel); controls.appendChild(next); controls.appendChild(today);
+    const serviceFilter = el('select'); serviceFilter.appendChild(el('option', { value:'' }, ['All services'])); [...new Set(bookings.map(item => item.Service).filter(Boolean))].sort().forEach(value => serviceFilter.appendChild(el('option', { value }, [value])));
+    const statusFilter = el('select'); ['All statuses','Confirmed','Completed','Cancelled','No-show'].forEach((value,index) => statusFilter.appendChild(el('option', { value:index ? value : '' }, [value])));
+    const viewToggle = el('button', { className:'btn' }, [bookingViewMode === 'calendar' ? 'List View' : 'Calendar View']);
+    controls.appendChild(el('div', { className:'field' }, [el('label', {}, ['Service']), serviceFilter])); controls.appendChild(el('div', { className:'field' }, [el('label', {}, ['Status']), statusFilter])); controls.appendChild(viewToggle); card.appendChild(controls);
+    const content = el('div'); card.appendChild(content);
+    function filtered() { return bookings.filter(item => (!serviceFilter.value || item.Service === serviceFilter.value) && (!statusFilter.value || item.Status === statusFilter.value)); }
+    function draw() {
+      content.textContent = ''; const rows = filtered();
+      if (bookingViewMode === 'list') {
+        const table = el('table'); const header = el('tr'); ['Date','Customer','Service','Status','Action'].forEach(x => header.appendChild(el('th',{},[x]))); table.appendChild(header);
+        rows.forEach(item => { const row=el('tr'); row.appendChild(el('td',{},[new Date(item['Appointment Time']).toLocaleString()])); row.appendChild(el('td',{},[item.Name||''])); row.appendChild(el('td',{},[item.Service||''])); row.appendChild(el('td',{},[item.Status||''])); const action=el('td'); const quote=el('button',{className:'btn btn-small'},['Create Quote']); quote.addEventListener('click',()=>callApi('create_quote_from_source',{sourceType:'Booking',sourceId:item.Booking_ID}).then(created=>created.success&&renderQuoteEditor(created.data.Quote_ID))); action.appendChild(quote); row.appendChild(action); table.appendChild(row); }); content.appendChild(table); return;
+      }
+      const grid = el('div', { className:'calendar-grid' }); ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(day=>grid.appendChild(el('div',{className:'calendar-weekday'},[day])));
+      const first = new Date(bookingMonth.getFullYear(), bookingMonth.getMonth(), 1); const gridStart = new Date(first); gridStart.setDate(1-first.getDay());
+      for(let i=0;i<42;i++){ const date=new Date(gridStart); date.setDate(gridStart.getDate()+i); const outside=date.getMonth()!==bookingMonth.getMonth(); const day=el('div',{className:'calendar-day'+(outside?' outside':'')}); day.appendChild(el('div',{className:'calendar-date'},[String(date.getDate())])); rows.filter(item=>{const d=new Date(item['Appointment Time']);return d.getFullYear()===date.getFullYear()&&d.getMonth()===date.getMonth()&&d.getDate()===date.getDate();}).forEach(item=>{const event=el('button',{className:'calendar-event',title:(item.Name||'')+' — '+(item.Service||'')},[new Date(item['Appointment Time']).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+' '+(item.Name||'Customer')]); event.addEventListener('click',()=>{ if(item.Customer_ID) renderCustomerProfile(item.Customer_ID); }); day.appendChild(event);}); grid.appendChild(day); }
+      content.appendChild(grid);
+    }
+    serviceFilter.addEventListener('change',draw); statusFilter.addEventListener('change',draw); viewToggle.addEventListener('click',()=>{bookingViewMode=bookingViewMode==='calendar'?'list':'calendar';renderBookingsWorkspace();}); draw(); mainEl.appendChild(card);
+  }
+
+  async function renderOwnerBooking() {
+    mainEl.textContent=''; mainEl.appendChild(el('p',{className:'hint'},['Loading customers and services...']));
+    const [customersResult, servicesResult] = await Promise.all([callApi('list_customers'), callApi('services')]);
+    if(!customersResult.success || servicesResult.error){ mainEl.textContent=''; mainEl.appendChild(errorCard(customersResult.error || servicesResult.error)); return; }
+    mainEl.textContent=''; const card=el('div',{className:'card'}); const toolbar=el('div',{className:'toolbar'},[el('div',{},[el('h2',{style:'margin:0;font-size:18px'},['Book Appointment']),el('p',{className:'hint'},['Choose a customer and service, then check the live calendar for open times.'])])]); const back=el('button',{className:'btn btn-small'},['← Booking Calendar']); back.addEventListener('click',renderBookingsWorkspace); toolbar.appendChild(back); card.appendChild(toolbar);
+    const customerSelect=el('select'); customerSelect.appendChild(el('option',{value:''},['Choose a customer...'])); customersResult.data.forEach(customer=>customerSelect.appendChild(el('option',{value:customer.Customer_ID},[customer.Name+(customer.Phone?' — '+customer.Phone:'')])));
+    const serviceSelect=el('select'); serviceSelect.appendChild(el('option',{value:''},['Choose a service...'])); (servicesResult.services||[]).forEach(service=>serviceSelect.appendChild(el('option',{value:service.name},[service.name+' — '+service.durationMinutes+' min'])));
+    const slotSelect=el('select'); slotSelect.disabled=true; slotSelect.appendChild(el('option',{value:''},['Choose a service to check availability']));
+    customerSelect.setAttribute('aria-label','Customer'); serviceSelect.setAttribute('aria-label','Service'); slotSelect.setAttribute('aria-label','Available time');
+    const customerWrap=el('div',{className:'field'},[el('label',{},['Customer']),customerSelect]); const serviceWrap=el('div',{className:'field'},[el('label',{},['Service']),serviceSelect]); const slotWrap=el('div',{className:'field'},[el('label',{},['Available time']),slotSelect]); const address=textareaField('Service address',''); const notes=textareaField('Appointment notes',''); const availabilityStatus=el('p',{className:'hint'});
+    serviceSelect.addEventListener('change',async()=>{slotSelect.disabled=true;slotSelect.textContent='';slotSelect.appendChild(el('option',{value:''},['Checking the calendar...']));availabilityStatus.textContent='';if(!serviceSelect.value)return;const result=await callApi('availability',{service:serviceSelect.value});slotSelect.textContent='';if(result.error||!result.slots||!result.slots.length){slotSelect.appendChild(el('option',{value:''},['No available times in the booking window']));availabilityStatus.textContent='Try another service or adjust availability settings.';return;}slotSelect.appendChild(el('option',{value:''},['Choose an open time...']));result.slots.forEach(slot=>{const option=el('option',{value:slot.startIso},[slot.label]);option.dataset.end=slot.endIso;slotSelect.appendChild(option);});slotSelect.disabled=false;});
+    customerSelect.addEventListener('change',()=>{const customer=customersResult.data.find(item=>item.Customer_ID===customerSelect.value);if(customer&&!address.textarea.value)address.textarea.value=customer.Address||'';});
+    card.appendChild(el('div',{className:'field-row'},[customerWrap,serviceWrap]));card.appendChild(slotWrap);card.appendChild(availabilityStatus);card.appendChild(address.wrapper);card.appendChild(notes.wrapper);const status=el('p',{className:'status-line'});const save=el('button',{className:'btn btn-primary'},['Confirm Booking']);save.addEventListener('click',async()=>{if(!customerSelect.value||!serviceSelect.value||!slotSelect.value){status.textContent='Choose a customer, service, and available time.';status.className='status-line error';return;}save.disabled=true;save.textContent='Checking time...';const option=slotSelect.options[slotSelect.selectedIndex];const chosenStart=slotSelect.value;const result=await callApi('create_owner_booking',{data:encodeURIComponent(JSON.stringify({customerId:customerSelect.value,service:serviceSelect.value,slotStart:chosenStart,slotEnd:option.dataset.end,address:address.textarea.value,notes:notes.textarea.value}))});if(result.success){const bookedDate=new Date(chosenStart);bookingMonth=new Date(bookedDate.getFullYear(),bookedDate.getMonth(),1);status.textContent='Appointment confirmed.';status.className='status-line success';setTimeout(renderBookingsWorkspace,350);}else{save.disabled=false;save.textContent='Confirm Booking';status.textContent=result.error;status.className='status-line error';}});card.appendChild(save);card.appendChild(status);mainEl.appendChild(card);
+  }
+
+  async function renderSourceList(sourceType) {
+    const isBooking = sourceType === 'Booking';
+    mainEl.textContent = '';
+    mainEl.appendChild(el('p', { className: 'hint' }, ['Loading ' + (isBooking ? 'bookings' : 'leads') + '...']));
+    const result = await callApi(isBooking ? 'list_bookings' : 'list_leads');
+    if (!result.success) { mainEl.textContent = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    mainEl.textContent = '';
+    const card = el('div', { className: 'card' });
+    if (!result.data.length) {
+      card.appendChild(el('div', { className: 'empty-state' }, ['No ' + (isBooking ? 'bookings' : 'leads') + ' yet.']));
+    } else {
+      const table = el('table');
+      const header = el('tr');
+      ['Received', 'Name', isBooking ? 'Service / Time' : 'Interest', 'Status', 'Action'].forEach(label => header.appendChild(el('th', {}, [label])));
+      table.appendChild(header);
+      result.data.forEach(record => {
+        const row = el('tr');
+        row.appendChild(el('td', {}, [formatDate(record.Timestamp)]));
+        row.appendChild(el('td', {}, [String(record.Name || '')]));
+        row.appendChild(el('td', {}, [isBooking ? ((record.Service || '') + ' ' + formatDate(record['Appointment Time'])) : String(record['Service Interested'] || record.Message || '')]));
+        const statusCell = el('td');
+        statusCell.appendChild(el('span', { className: badgeClass(record.Status) }, [String(record.Status || '')]));
+        row.appendChild(statusCell);
+        const actionCell = el('td');
+        const button = el('button', { className: 'btn btn-small btn-primary' }, ['Create Quote']);
+        button.addEventListener('click', async event => {
+          event.stopPropagation();
+          button.disabled = true;
+          button.textContent = 'Creating...';
+          const sourceId = isBooking ? record.Booking_ID : record.Lead_ID;
+          const created = await callApi('create_quote_from_source', { sourceType, sourceId });
+          if (created.success) renderQuoteEditor(created.data.Quote_ID);
+          else { button.disabled = false; button.textContent = 'Create Quote'; alert(created.error); }
+        });
+        actionCell.appendChild(button);
+        row.appendChild(actionCell);
+        table.appendChild(row);
+      });
+      card.appendChild(table);
+    }
+    mainEl.appendChild(card);
+  }
+
+  async function renderCatalog() {
+    mainEl.textContent = '';
+    mainEl.appendChild(el('p', { className: 'hint' }, ['Loading products and services...']));
+    const result = await callApi('list_catalog');
+    if (!result.success) { mainEl.textContent = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    mainEl.textContent = '';
+    const editor = el('div', { className: 'card' });
+    editor.appendChild(el('h2', { style: 'margin-top:0;font-size:18px' }, ['Add a product or service']));
+    editor.appendChild(el('p', { className: 'hint' }, ['Save common work once, then add it to a quote in one click.']));
+    const name = textField('Name', '', 'e.g. Wi-Fi Setup');
+    const description = textareaField('Quote description', '');
+    const type = selectField('Type', 'Service', ['Service', 'Product']);
+    const unit = textField('Unit', 'each', 'each, hour, visit');
+    const duration = numberField('Duration (minutes)', 60);
+    const rate = numberField('Price', 0);
+    const taxable = el('input', { type: 'checkbox', checked: true });
+    const row1 = el('div', { className: 'field-row' }, [name.wrapper, type.wrapper]);
+    const row2 = el('div', { className: 'field-row' }, [unit.wrapper, duration.wrapper]);
+    const row3 = el('div', { className: 'field-row' }, [rate.wrapper, el('div', { className: 'field' }, [el('label', {}, ['Taxable']), taxable])]);
+    editor.appendChild(row1); editor.appendChild(description.wrapper); editor.appendChild(row2); editor.appendChild(row3);
+    const status = el('p', { className: 'status-line' });
+    const save = el('button', { className: 'btn btn-primary' }, ['Save Item']);
+    save.addEventListener('click', async () => {
+      if (!name.input.value.trim()) { status.textContent = 'Enter a name first.'; status.className = 'status-line error'; name.input.focus(); return; }
+      save.disabled = true; save.textContent = 'Saving...';
+      const saved = await callApi('save_catalog_item', { data: encodeURIComponent(JSON.stringify({ name: name.input.value, description: description.textarea.value, type: type.select.value, unit: unit.input.value, durationMinutes: duration.input.value, rate: rate.input.value, taxable: taxable.checked })) });
+      if (saved.success) renderCatalog(); else { save.disabled = false; save.textContent = 'Save Item'; status.textContent = saved.error; status.className = 'status-line error'; }
+    });
+    editor.appendChild(save); editor.appendChild(status); mainEl.appendChild(editor);
+    const list = el('div', { className: 'card' });
+    list.appendChild(el('h2', { style: 'margin-top:0;font-size:18px' }, ['Saved catalog']));
+    if (!result.data.length) list.appendChild(el('div', { className: 'empty-state' }, ['No saved items yet. Add your first service above.']));
+    else {
+      const table = el('table'); const header = el('tr'); ['Name', 'Type', 'Duration', 'Price', ''].forEach(x => header.appendChild(el('th', {}, [x]))); table.appendChild(header);
+      result.data.forEach(item => { const row = el('tr'); row.appendChild(el('td', {}, [item.Name])); row.appendChild(el('td', {}, [item.Type])); row.appendChild(el('td', {}, [item.Duration_Minutes ? item.Duration_Minutes + ' min' : '—'])); row.appendChild(el('td', {}, [formatMoney(item.Rate) + ' / ' + (item.Unit || 'each')])); const action = el('td'); const remove = el('button', { className: 'btn btn-small btn-danger' }, ['Archive']); remove.addEventListener('click', async () => { if (await confirmDialog('Archive ' + item.Name + '?')) { await callApi('archive_catalog_item', { id: item.Item_ID }); renderCatalog(); } }); action.appendChild(remove); row.appendChild(action); table.appendChild(row); });
+      list.appendChild(table);
+    }
+    mainEl.appendChild(list);
+  }
+
+  // ============================================================
+  // QUOTE REQUESTS LIST — incoming intake form submissions
+  // ============================================================
+  async function renderRequestsList() {
+    mainEl.innerHTML = '<p class="hint">Loading requests...</p>';
+    const result = await callApi('list_requests');
+    if (!result.success) { mainEl.innerHTML = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    const requests = result.data;
+
+    mainEl.innerHTML = '';
+    const card = el('div', { className: 'card' });
+
+    if (requests.length === 0) {
+      card.appendChild(el('div', { className: 'empty-state' }, [
+        'No requests yet. Once your intake form (see website/request-builder.html) is live, submissions will show up here.'
+      ]));
+    } else {
+      const table = el('table');
+      const allKeys = Object.keys(requests[0]).filter(k => !['Request_ID', 'Source Page'].includes(k));
+      const previewKeys = allKeys.slice(0, 5);
+      table.appendChild(el('tr', {}, previewKeys.map(k => { const th = el('th'); th.textContent = k; return th; })));
+
+      requests.forEach(req => {
+        const row = el('tr');
+        previewKeys.forEach(k => {
+          const td = el('td');
+          if (k === 'Status') {
+            const badge = el('span', { className: badgeClass(req[k]) });
+            badge.textContent = req[k] || '';
+            td.appendChild(badge);
+          } else {
+            td.textContent = req[k] || '';
+          }
+          row.appendChild(td);
+        });
+
+        const actionTd = el('td');
+        if (req.Status !== 'Converted') {
+          const convertBtn = el('button', { className: 'btn btn-small btn-primary' });
+          convertBtn.textContent = 'Create Quote from This';
+          convertBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            convertBtn.textContent = 'Creating...';
+            const createResult = await callApi('create_quote_from_request', { requestId: req.Request_ID });
+            if (createResult.success) {
+              document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.view === 'quotes'));
+              currentView = 'quotes';
+              renderQuoteEditor(createResult.data.Quote_ID);
+            } else {
+              alert('Error: ' + createResult.error);
+              convertBtn.textContent = 'Create Quote from This';
+            }
+          });
+          actionTd.appendChild(convertBtn);
+        } else {
+          actionTd.textContent = 'Converted';
+        }
+        row.appendChild(actionTd);
+        table.appendChild(row);
+      });
+      card.appendChild(table);
+    }
+    mainEl.appendChild(card);
+  }
+
+  // ============================================================
+  // QUOTES LIST
+  // ============================================================
+  async function renderQuotesList() {
+    mainEl.innerHTML = '<p class="hint">Loading quotes...</p>';
+    const result = await callApi('list_quotes');
+    if (!result.success) { mainEl.innerHTML = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    quotesCache = result.data;
+
+    mainEl.innerHTML = '';
+    const card = el('div', { className: 'card' });
+
+    if (quotesCache.length === 0) {
+      card.appendChild(el('div', { className: 'empty-state' }, ['No quotes yet. Click "+ New Quote" to create your first one.']));
+    } else {
+      const table = el('table');
+      table.innerHTML = '<tr><th>Quote #</th><th>Customer</th><th>Status</th><th>Total</th><th>Created</th></tr>';
+      quotesCache.forEach(q => {
+        const row = el('tr');
+        row.innerHTML = `<td>${escapeHtml(q.Quote_Number)}</td><td>${escapeHtml(q.Customer_Name)}</td>` +
+          `<td><span class="${badgeClass(q.Status)}">${escapeHtml(q.Status)}</span></td>` +
+          `<td>${formatMoney(q.Total)}</td><td>${formatDate(q.Created_Date)}</td>`;
+        row.addEventListener('click', () => renderQuoteEditor(q.Quote_ID));
+        table.appendChild(row);
+      });
+      card.appendChild(table);
+    }
+    mainEl.appendChild(card);
+  }
+
+  function errorCard(message) {
+    const card = el('div', { className: 'card' });
+    card.appendChild(el('p', { className: 'status-line error' }, ['Error: ' + message]));
+    return card;
+  }
+
+  // ============================================================
+  // QUOTE EDITOR
+  // ============================================================
+  async function renderQuoteEditor(quoteId, selectedCustomer) {
+    mainEl.innerHTML = '<p class="hint">Loading...</p>';
+    let quote = { Customer_ID: selectedCustomer ? selectedCustomer.Customer_ID : '', Customer_Name: selectedCustomer ? selectedCustomer.Name : '', Customer_Email: selectedCustomer ? selectedCustomer.Email : '', Customer_Phone: selectedCustomer ? selectedCustomer.Phone : '', Source_Type: '', Source_Reference: '', Status: 'Draft', Notes: '', Terms: '', Discount: 0, items: [{ Description: '', Quantity: 1, Rate: 0, Taxable: true }] };
+
+    if (quoteId) {
+      const result = await callApi('get_quote', { id: quoteId });
+      if (!result.success) { mainEl.innerHTML = ''; mainEl.appendChild(errorCard(result.error)); return; }
+      quote = result.data;
+    }
+
+    mainEl.innerHTML = '';
+    const card = el('div', { className: 'card' });
+
+    const toolbar = el('div', { className: 'toolbar' });
+    toolbar.appendChild(el('h2', { style: 'margin:0;font-size:16px;' }, [quoteId ? ('Quote ' + quote.Quote_Number) : 'New Quote']));
+    const backBtn = el('button', { className: 'btn btn-small' });
+    backBtn.textContent = '\u2190 Back to Quotes';
+    backBtn.addEventListener('click', renderQuotesList);
+    toolbar.appendChild(backBtn);
+    card.appendChild(toolbar);
+
+    // Customer fields
+    const customersResult = await callApi('list_customers');
+    const customers = customersResult.success ? customersResult.data : [];
+    let selectedCustomerId = quote.Customer_ID || '';
+    const custRow = el('div', { className: 'field-row' });
+    const nameField = textField('Customer Name', quote.Customer_Name);
+    const emailField = textField('Customer Email', quote.Customer_Email);
+    custRow.appendChild(nameField.wrapper);
+    custRow.appendChild(emailField.wrapper);
+    card.appendChild(custRow);
+
+    const customerPicker = el('select');
+    customerPicker.appendChild(el('option', { value: '' }, ['Enter customer manually']));
+    customers.forEach(customer => { const option = el('option', { value: customer.Customer_ID }, [customer.Name + (customer.Phone ? ' — ' + customer.Phone : '')]); if (customer.Customer_ID === selectedCustomerId) option.selected = true; customerPicker.appendChild(option); });
+    const customerPickerWrap = el('div', { className: 'field' }, [el('label', {}, ['Choose saved customer']), customerPicker]);
+    customerPicker.addEventListener('change', () => { selectedCustomerId = customerPicker.value; const customer = customers.find(item => item.Customer_ID === selectedCustomerId); if (customer) { nameField.input.value = customer.Name || ''; emailField.input.value = customer.Email || ''; phoneField.input.value = customer.Phone || ''; } });
+    card.insertBefore(customerPickerWrap, custRow);
+
+    const custRow2 = el('div', { className: 'field-row' });
+    const phoneField = textField('Customer Phone', quote.Customer_Phone);
+    const statusField = selectField('Status', quote.Status || 'Draft', ['Draft', 'Sent', 'Accepted', 'Declined', 'Expired']);
+    custRow2.appendChild(phoneField.wrapper);
+    custRow2.appendChild(statusField.wrapper);
+    card.appendChild(custRow2);
+
+    const sourceRow = el('div', { className: 'field-row' });
+    const sourceTypeField = selectField('Source', quote.Source_Type || '', ['', 'Lead', 'Booking']);
+    const sourceRefField = textField('Source Reference', quote.Source_Reference || '', 'e.g. lead\'s email or booking date');
+    sourceRow.appendChild(sourceTypeField.wrapper);
+    sourceRow.appendChild(sourceRefField.wrapper);
+    card.appendChild(sourceRow);
+
+    // Line items
+    card.appendChild(el('label', {}, ['Line Items']));
+    const catalogResult = await callApi('list_catalog');
+    const catalogItems = catalogResult.success ? catalogResult.data : [];
+    const catalogRow = el('div', { className: 'field-row', style: 'align-items:end;margin-bottom:12px' });
+    const catalogSelect = el('select');
+    catalogSelect.appendChild(el('option', { value: '' }, ['Choose a saved product or service...']));
+    catalogItems.forEach(item => catalogSelect.appendChild(el('option', { value: item.Item_ID }, [item.Name + ' — ' + formatMoney(item.Rate)])));
+    const catalogWrap = el('div', { className: 'field' }, [el('label', {}, ['Add from catalog']), catalogSelect]);
+    const addCatalogBtn = el('button', { className: 'btn', type: 'button', style: 'margin-bottom:14px' }, ['Add to Quote']);
+    catalogRow.appendChild(catalogWrap); catalogRow.appendChild(addCatalogBtn); card.appendChild(catalogRow);
+    const itemsTable = el('table', { className: 'items-table' });
+    itemsTable.innerHTML = '<tr><th class="col-desc">Description</th><th class="col-qty">Qty</th><th class="col-rate">Rate</th><th class="col-amount">Amount</th><th class="col-tax">Tax?</th><th></th></tr>';
+    card.appendChild(itemsTable);
+
+    let items = (quote.items || []).map(i => ({
+      description: i.Description || '', quantity: Number(i.Quantity) || 0, rate: Number(i.Rate) || 0, taxable: !!i.Taxable
+    }));
+    if (items.length === 0) items = [{ description: '', quantity: 1, rate: 0, taxable: true }];
+    addCatalogBtn.addEventListener('click', () => {
+      const selected = catalogItems.find(item => item.Item_ID === catalogSelect.value);
+      if (!selected) return;
+      if (items.length === 1 && !items[0].description && !items[0].rate) items = [];
+      items.push({ description: selected.Description || selected.Name, quantity: 1, rate: Number(selected.Rate) || 0, taxable: selected.Taxable === true || String(selected.Taxable).toLowerCase() === 'true' });
+      renderItemsRows(); recalcAndRenderTotals(); catalogSelect.value = '';
+    });
+
+    const totalsBox = el('div', { className: 'totals-box' });
+    const discountField = numberField('Discount', quote.Discount || 0);
+
+    function recalcAndRenderTotals() {
+      const subtotal = items.reduce((s, i) => s + (i.quantity * i.rate), 0);
+      const taxableSubtotal = items.filter(i => i.taxable).reduce((s, i) => s + (i.quantity * i.rate), 0);
+      const discount = parseFloat(discountField.input.value) || 0;
+      const taxRate = 8.5; // Phase 1: fixed default; Settings-driven in Phase 2
+      const tax = taxableSubtotal * (taxRate / 100);
+      const total = subtotal - discount + tax;
+      totalsBox.innerHTML = `
+        <div class="row"><span>Subtotal</span><span>${formatMoney(subtotal)}</span></div>
+        <div class="row"><span>Discount</span><span>-${formatMoney(discount)}</span></div>
+        <div class="row"><span>Tax (${taxRate}%)</span><span>${formatMoney(tax)}</span></div>
+        <div class="row total"><span>Total</span><span>${formatMoney(total)}</span></div>
+      `;
+    }
+
+    function renderItemsRows() {
+      // Clear all rows except header
+      while (itemsTable.rows.length > 1) itemsTable.deleteRow(1);
+      items.forEach((item, idx) => {
+        const row = itemsTable.insertRow();
+        const descCell = row.insertCell();
+        const descInput = el('input', { type: 'text', value: item.description });
+        descInput.addEventListener('input', () => { item.description = descInput.value; });
+        descCell.appendChild(descInput);
+
+        const qtyCell = row.insertCell();
+        const qtyInput = el('input', { type: 'number', value: item.quantity, step: '0.5' });
+        qtyInput.addEventListener('input', () => { item.quantity = parseFloat(qtyInput.value) || 0; recalcAndRenderTotals(); });
+        qtyCell.appendChild(qtyInput);
+
+        const rateCell = row.insertCell();
+        const rateInput = el('input', { type: 'number', value: item.rate, step: '0.01' });
+        rateInput.addEventListener('input', () => { item.rate = parseFloat(rateInput.value) || 0; recalcAndRenderTotals(); });
+        rateCell.appendChild(rateInput);
+
+        const amountCell = row.insertCell();
+        amountCell.textContent = formatMoney(item.quantity * item.rate);
+
+        const taxCell = row.insertCell();
+        taxCell.style.textAlign = 'center';
+        const taxCheckbox = el('input', { type: 'checkbox', checked: item.taxable });
+        taxCheckbox.addEventListener('change', () => { item.taxable = taxCheckbox.checked; recalcAndRenderTotals(); });
+        taxCell.appendChild(taxCheckbox);
+
+        const removeCell = row.insertCell();
+        const removeBtn = el('button', { className: 'btn btn-small btn-danger', type: 'button' });
+        removeBtn.textContent = '\u2715';
+        removeBtn.addEventListener('click', () => {
+          items.splice(idx, 1);
+          if (items.length === 0) items.push({ description: '', quantity: 1, rate: 0, taxable: true });
+          renderItemsRows();
+          recalcAndRenderTotals();
+        });
+        removeCell.appendChild(removeBtn);
+      });
+      // recompute amount cells after render (need item refs, re-render is simplest and cheap for typical item counts)
+      Array.from(itemsTable.rows).slice(1).forEach((row, idx) => {
+        row.cells[3].textContent = formatMoney(items[idx].quantity * items[idx].rate);
+      });
+    }
+    renderItemsRows();
+
+    const addItemBtn = el('button', { className: 'btn btn-small', type: 'button', style: 'margin-top:8px;' });
+    addItemBtn.textContent = '+ Add Line Item';
+    addItemBtn.addEventListener('click', () => {
+      items.push({ description: '', quantity: 1, rate: 0, taxable: true });
+      renderItemsRows();
+      recalcAndRenderTotals();
+    });
+    card.appendChild(addItemBtn);
+
+    discountField.input.addEventListener('input', recalcAndRenderTotals);
+    card.appendChild(el('div', { style: 'max-width:200px;margin-top:14px;' }, [discountField.wrapper]));
+    card.appendChild(totalsBox);
+    recalcAndRenderTotals();
+
+    const notesField = textareaField('Notes', quote.Notes || '');
+    const termsField = textareaField('Terms', quote.Terms || '');
+    card.appendChild(notesField.wrapper);
+    card.appendChild(termsField.wrapper);
+
+    const statusLine = el('p', { className: 'status-line' });
+
+    const actions = el('div', { className: 'form-actions' });
+    const saveBtn = el('button', { className: 'btn btn-primary' });
+    saveBtn.textContent = 'Save Quote';
+    saveBtn.addEventListener('click', async () => {
+      statusLine.textContent = 'Saving...';
+      statusLine.className = 'status-line';
+      const payload = {
+        customerId: selectedCustomerId,
+        id: quoteId || undefined,
+        quoteNumber: quote.Quote_Number,
+        createdAt: quote.Created_At,
+        createdDate: quote.Created_Date,
+        expirationDate: quote.Expiration_Date,
+        customerName: nameField.input.value,
+        customerEmail: emailField.input.value,
+        customerPhone: phoneField.input.value,
+        sourceType: sourceTypeField.select.value,
+        sourceReference: sourceRefField.input.value,
+        status: statusField.select.value,
+        discount: parseFloat(discountField.input.value) || 0,
+        taxRate: 8.5,
+        notes: notesField.textarea.value,
+        terms: termsField.textarea.value,
+        items: items.filter(i => i.description || i.quantity || i.rate)
+      };
+      const result = await saveQuoteData(payload);
+      if (result.success) {
+        statusLine.textContent = 'Saved!';
+        statusLine.className = 'status-line success';
+        setTimeout(() => renderQuoteEditor(result.data.Quote_ID), 400);
+      } else {
+        statusLine.textContent = 'Error: ' + result.error;
+        statusLine.className = 'status-line error';
+      }
+    });
+    actions.appendChild(saveBtn);
+
+    if (quoteId && quote.Status === 'Accepted') {
+      const convertBtn = el('button', { className: 'btn btn-success' });
+      convertBtn.textContent = 'Create Invoice from this Quote';
+      convertBtn.addEventListener('click', async () => {
+        const confirmed = await confirmDialog('Create a new invoice from this quote? The quote itself will not be changed.');
+        if (!confirmed) return;
+        statusLine.textContent = 'Converting...';
+        const result = await callApi('convert_to_invoice', { quoteId: quoteId });
+        if (result.success) {
+          renderInvoiceEditor(result.data.Invoice_ID);
+        } else {
+          statusLine.textContent = 'Error: ' + result.error;
+          statusLine.className = 'status-line error';
+        }
+      });
+      actions.appendChild(convertBtn);
+    }
+
+    if (quoteId) {
+      const pdfBtn = el('button', { className: 'btn' });
+      pdfBtn.textContent = 'Print / Download PDF';
+      pdfBtn.addEventListener('click', () => {
+        const url = 'print-view.html?type=quote&id=' + encodeURIComponent(quoteId) + '&apiUrl=' + encodeURIComponent(CONFIG.apiUrl) + '&adminKey=' + encodeURIComponent(CONFIG.adminKey);
+        window.open(url, '_blank');
+      });
+      actions.appendChild(pdfBtn);
+    }
+
+    if (quoteId && quote.Status === 'Draft') {
+      const deleteBtn = el('button', { className: 'btn btn-danger' });
+      deleteBtn.textContent = 'Delete Draft';
+      deleteBtn.addEventListener('click', async () => {
+        const confirmed = await confirmDialog('Delete this draft quote? This cannot be undone.');
+        if (!confirmed) return;
+        const result = await callApi('delete_quote', { id: quoteId });
+        if (result.success) renderQuotesList();
+        else { statusLine.textContent = 'Error: ' + result.error; statusLine.className = 'status-line error'; }
+      });
+      actions.appendChild(deleteBtn);
+    }
+
+    card.appendChild(actions);
+    card.appendChild(statusLine);
+    mainEl.appendChild(card);
+  }
+
+  // ============================================================
+  // INVOICES LIST
+  // ============================================================
+  async function renderInvoicesList() {
+    mainEl.innerHTML = '<p class="hint">Loading invoices...</p>';
+    const result = await callApi('list_invoices');
+    if (!result.success) { mainEl.innerHTML = ''; mainEl.appendChild(errorCard(result.error)); return; }
+    invoicesCache = result.data;
+
+    mainEl.innerHTML = '';
+    const card = el('div', { className: 'card' });
+
+    if (invoicesCache.length === 0) {
+      card.appendChild(el('div', { className: 'empty-state' }, ['No invoices yet.']));
+    } else {
+      const table = el('table');
+      table.innerHTML = '<tr><th>Invoice #</th><th>Customer</th><th>Status</th><th>Total</th><th>Balance Due</th><th>Due Date</th></tr>';
+      invoicesCache.forEach(inv => {
+        const row = el('tr');
+        row.innerHTML = `<td>${escapeHtml(inv.Invoice_Number)}</td><td>${escapeHtml(inv.Customer_Name)}</td>` +
+          `<td><span class="${badgeClass(inv.Status)}">${escapeHtml(inv.Status)}</span></td>` +
+          `<td>${formatMoney(inv.Total)}</td><td>${formatMoney(inv.Balance_Due)}</td><td>${formatDate(inv.Due_Date)}</td>`;
+        row.addEventListener('click', () => renderInvoiceEditor(inv.Invoice_ID));
+        table.appendChild(row);
+      });
+      card.appendChild(table);
+    }
+    mainEl.appendChild(card);
+  }
+
+  // ============================================================
+  // INVOICE EDITOR
+  // ============================================================
+  async function renderInvoiceEditor(invoiceId, selectedCustomer) {
+    mainEl.innerHTML = '<p class="hint">Loading...</p>';
+    let invoice = { Customer_ID: selectedCustomer ? selectedCustomer.Customer_ID : '', Customer_Name: selectedCustomer ? selectedCustomer.Name : '', Customer_Email: selectedCustomer ? selectedCustomer.Email : '', Customer_Phone: selectedCustomer ? selectedCustomer.Phone : '', Status: 'Draft', Notes: '', Payment_Instructions: '', Discount: 0, Amount_Paid: 0, items: [{ Description: '', Quantity: 1, Rate: 0, Taxable: true }] };
+
+    if (invoiceId) {
+      const result = await callApi('get_invoice', { id: invoiceId });
+      if (!result.success) { mainEl.innerHTML = ''; mainEl.appendChild(errorCard(result.error)); return; }
+      invoice = result.data;
+    }
+
+    mainEl.innerHTML = '';
+    const card = el('div', { className: 'card' });
+
+    const toolbar = el('div', { className: 'toolbar' });
+    toolbar.appendChild(el('h2', { style: 'margin:0;font-size:16px;' }, [invoiceId ? ('Invoice ' + invoice.Invoice_Number) : 'New Invoice']));
+    const backBtn = el('button', { className: 'btn btn-small' });
+    backBtn.textContent = '\u2190 Back to Invoices';
+    backBtn.addEventListener('click', renderInvoicesList);
+    toolbar.appendChild(backBtn);
+    card.appendChild(toolbar);
+
+    if (invoice.Source_Quote_ID) {
+      card.appendChild(el('p', { className: 'hint' }, ['Created from quote — view it in the Quotes tab.']));
+    }
+
+    const custRow = el('div', { className: 'field-row' });
+    const nameField = textField('Customer Name', invoice.Customer_Name);
+    const emailField = textField('Customer Email', invoice.Customer_Email);
+    custRow.appendChild(nameField.wrapper);
+    custRow.appendChild(emailField.wrapper);
+    card.appendChild(custRow);
+    const invoiceCustomersResult = await callApi('list_customers');
+    const invoiceCustomers = invoiceCustomersResult.success ? invoiceCustomersResult.data : [];
+    let invoiceCustomerId = invoice.Customer_ID || '';
+    const invoiceCustomerPicker = el('select'); invoiceCustomerPicker.appendChild(el('option', { value: '' }, ['Enter customer manually']));
+    invoiceCustomers.forEach(customer => { const option = el('option', { value: customer.Customer_ID }, [customer.Name + (customer.Phone ? ' — ' + customer.Phone : '')]); if (customer.Customer_ID === invoiceCustomerId) option.selected = true; invoiceCustomerPicker.appendChild(option); });
+    const invoicePickerWrap = el('div', { className: 'field' }, [el('label', {}, ['Choose saved customer']), invoiceCustomerPicker]);
+    invoiceCustomerPicker.addEventListener('change', () => { invoiceCustomerId = invoiceCustomerPicker.value; const customer = invoiceCustomers.find(item => item.Customer_ID === invoiceCustomerId); if (customer) { nameField.input.value = customer.Name || ''; emailField.input.value = customer.Email || ''; phoneField.input.value = customer.Phone || ''; } });
+    card.insertBefore(invoicePickerWrap, custRow);
+
+    const custRow2 = el('div', { className: 'field-row' });
+    const phoneField = textField('Customer Phone', invoice.Customer_Phone);
+    const dueDateField = textField('Due Date', invoice.Due_Date ? new Date(invoice.Due_Date).toISOString().split('T')[0] : '', '', 'date');
+    custRow2.appendChild(phoneField.wrapper);
+    custRow2.appendChild(dueDateField.wrapper);
+    card.appendChild(custRow2);
+
+    card.appendChild(el('label', {}, ['Line Items']));
+    const itemsTable = el('table', { className: 'items-table' });
+    itemsTable.innerHTML = '<tr><th class="col-desc">Description</th><th class="col-qty">Qty</th><th class="col-rate">Rate</th><th class="col-amount">Amount</th><th class="col-tax">Tax?</th><th></th></tr>';
+    card.appendChild(itemsTable);
+
+    let items = (invoice.items || []).map(i => ({
+      description: i.Description || '', quantity: Number(i.Quantity) || 0, rate: Number(i.Rate) || 0, taxable: !!i.Taxable
+    }));
+    if (items.length === 0) items = [{ description: '', quantity: 1, rate: 0, taxable: true }];
+
+    const totalsBox = el('div', { className: 'totals-box' });
+    const discountField = numberField('Discount', invoice.Discount || 0);
+    const amountPaidField = numberField('Amount Paid', invoice.Amount_Paid || 0);
+
+    function recalcAndRenderTotals() {
+      const subtotal = items.reduce((s, i) => s + (i.quantity * i.rate), 0);
+      const taxableSubtotal = items.filter(i => i.taxable).reduce((s, i) => s + (i.quantity * i.rate), 0);
+      const discount = parseFloat(discountField.input.value) || 0;
+      const taxRate = 8.5;
+      const tax = taxableSubtotal * (taxRate / 100);
+      const total = subtotal - discount + tax;
+      const amountPaid = parseFloat(amountPaidField.input.value) || 0;
+      const balance = total - amountPaid;
+      totalsBox.innerHTML = `
+        <div class="row"><span>Subtotal</span><span>${formatMoney(subtotal)}</span></div>
+        <div class="row"><span>Discount</span><span>-${formatMoney(discount)}</span></div>
+        <div class="row"><span>Tax (${taxRate}%)</span><span>${formatMoney(tax)}</span></div>
+        <div class="row total"><span>Total</span><span>${formatMoney(total)}</span></div>
+        <div class="row"><span>Amount Paid</span><span>${formatMoney(amountPaid)}</span></div>
+        <div class="row total"><span>Balance Due</span><span>${formatMoney(balance)}</span></div>
+      `;
+    }
+
+    function renderItemsRows() {
+      while (itemsTable.rows.length > 1) itemsTable.deleteRow(1);
+      items.forEach((item, idx) => {
+        const row = itemsTable.insertRow();
+        const descCell = row.insertCell();
+        const descInput = el('input', { type: 'text', value: item.description });
+        descInput.addEventListener('input', () => { item.description = descInput.value; });
+        descCell.appendChild(descInput);
+
+        const qtyCell = row.insertCell();
+        const qtyInput = el('input', { type: 'number', value: item.quantity, step: '0.5' });
+        qtyInput.addEventListener('input', () => { item.quantity = parseFloat(qtyInput.value) || 0; recalcAndRenderTotals(); });
+        qtyCell.appendChild(qtyInput);
+
+        const rateCell = row.insertCell();
+        const rateInput = el('input', { type: 'number', value: item.rate, step: '0.01' });
+        rateInput.addEventListener('input', () => { item.rate = parseFloat(rateInput.value) || 0; recalcAndRenderTotals(); });
+        rateCell.appendChild(rateInput);
+
+        const amountCell = row.insertCell();
+        amountCell.textContent = formatMoney(item.quantity * item.rate);
+
+        const taxCell = row.insertCell();
+        taxCell.style.textAlign = 'center';
+        const taxCheckbox = el('input', { type: 'checkbox', checked: item.taxable });
+        taxCheckbox.addEventListener('change', () => { item.taxable = taxCheckbox.checked; recalcAndRenderTotals(); });
+        taxCell.appendChild(taxCheckbox);
+
+        const removeCell = row.insertCell();
+        const removeBtn = el('button', { className: 'btn btn-small btn-danger', type: 'button' });
+        removeBtn.textContent = '\u2715';
+        removeBtn.addEventListener('click', () => {
+          items.splice(idx, 1);
+          if (items.length === 0) items.push({ description: '', quantity: 1, rate: 0, taxable: true });
+          renderItemsRows();
+          recalcAndRenderTotals();
+        });
+        removeCell.appendChild(removeBtn);
+      });
+      Array.from(itemsTable.rows).slice(1).forEach((row, idx) => {
+        row.cells[3].textContent = formatMoney(items[idx].quantity * items[idx].rate);
+      });
+    }
+    renderItemsRows();
+
+    const addItemBtn = el('button', { className: 'btn btn-small', type: 'button', style: 'margin-top:8px;' });
+    addItemBtn.textContent = '+ Add Line Item';
+    addItemBtn.addEventListener('click', () => {
+      items.push({ description: '', quantity: 1, rate: 0, taxable: true });
+      renderItemsRows();
+      recalcAndRenderTotals();
+    });
+    card.appendChild(addItemBtn);
+
+    discountField.input.addEventListener('input', recalcAndRenderTotals);
+    amountPaidField.input.addEventListener('input', recalcAndRenderTotals);
+    const moneyRow = el('div', { className: 'field-row', style: 'max-width:420px;margin-top:14px;' });
+    moneyRow.appendChild(discountField.wrapper);
+    moneyRow.appendChild(amountPaidField.wrapper);
+    card.appendChild(moneyRow);
+    card.appendChild(totalsBox);
+    recalcAndRenderTotals();
+
+    const payMethodField = textField('Payment Method', invoice.Payment_Method || '', 'e.g. Check, Venmo, Cash');
+    card.appendChild(payMethodField.wrapper);
+    const notesField = textareaField('Notes', invoice.Notes || '');
+    const payInstructionsField = textareaField('Payment Instructions', invoice.Payment_Instructions || '');
+    card.appendChild(notesField.wrapper);
+    card.appendChild(payInstructionsField.wrapper);
+
+    const statusLine = el('p', { className: 'status-line' });
+
+    const actions = el('div', { className: 'form-actions' });
+    const saveBtn = el('button', { className: 'btn btn-primary' });
+    saveBtn.textContent = 'Save Invoice';
+    saveBtn.addEventListener('click', async () => {
+      statusLine.textContent = 'Saving...';
+      statusLine.className = 'status-line';
+      const payload = {
+        customerId: invoiceCustomerId,
+        id: invoiceId || undefined,
+        invoiceNumber: invoice.Invoice_Number,
+        createdAt: invoice.Created_At,
+        createdDate: invoice.Created_Date,
+        sourceQuoteId: invoice.Source_Quote_ID,
+        dueDate: dueDateField.input.value,
+        customerName: nameField.input.value,
+        customerEmail: emailField.input.value,
+        customerPhone: phoneField.input.value,
+        status: invoice.Status,
+        discount: parseFloat(discountField.input.value) || 0,
+        taxRate: 8.5,
+        amountPaid: parseFloat(amountPaidField.input.value) || 0,
+        paymentMethod: payMethodField.input.value,
+        notes: notesField.textarea.value,
+        paymentInstructions: payInstructionsField.textarea.value,
+        items: items.filter(i => i.description || i.quantity || i.rate)
+      };
+      const result = await saveInvoiceData(payload);
+      if (result.success) {
+        statusLine.textContent = 'Saved!';
+        statusLine.className = 'status-line success';
+        setTimeout(() => renderInvoiceEditor(result.data.Invoice_ID), 400);
+      } else {
+        statusLine.textContent = 'Error: ' + result.error;
+        statusLine.className = 'status-line error';
+      }
+    });
+    actions.appendChild(saveBtn);
+
+    if (invoiceId) {
+      const pdfBtn = el('button', { className: 'btn' });
+      pdfBtn.textContent = 'Print / Download PDF';
+      pdfBtn.addEventListener('click', () => {
+        const url = 'print-view.html?type=invoice&id=' + encodeURIComponent(invoiceId) + '&apiUrl=' + encodeURIComponent(CONFIG.apiUrl) + '&adminKey=' + encodeURIComponent(CONFIG.adminKey);
+        window.open(url, '_blank');
+      });
+      actions.appendChild(pdfBtn);
+    }
+
+    card.appendChild(actions);
+    card.appendChild(statusLine);
+    mainEl.appendChild(card);
+  }
+
+  // ---- Field builder helpers ----
+  function textField(labelText, value, placeholder, type) {
+    const wrapper = el('div', { className: 'field' });
+    wrapper.appendChild(el('label', {}, [labelText]));
+    const input = el('input', { type: type || 'text', value: value || '', placeholder: placeholder || '' });
+    wrapper.appendChild(input);
+    return { wrapper, input };
+  }
+  function numberField(labelText, value) {
+    const wrapper = el('div', { className: 'field' });
+    wrapper.appendChild(el('label', {}, [labelText]));
+    const input = el('input', { type: 'number', value: value || 0, step: '0.01' });
+    wrapper.appendChild(input);
+    return { wrapper, input };
+  }
+  function textareaField(labelText, value) {
+    const wrapper = el('div', { className: 'field' });
+    wrapper.appendChild(el('label', {}, [labelText]));
+    const textarea = el('textarea', { value: value || '' });
+    textarea.value = value || '';
+    wrapper.appendChild(textarea);
+    return { wrapper, textarea };
+  }
+  function selectField(labelText, value, options) {
+    const wrapper = el('div', { className: 'field' });
+    wrapper.appendChild(el('label', {}, [labelText]));
+    const select = el('select');
+    options.forEach(opt => {
+      const o = el('option', { value: opt });
+      o.textContent = opt || '-- None --';
+      if (opt === value) o.selected = true;
+      select.appendChild(o);
+    });
+    wrapper.appendChild(select);
+    return { wrapper, select };
+  }
+
+  // ============================================================
+  // NAV
+  // ============================================================
+  document.querySelectorAll('nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      if (currentView === 'leads') renderSourceList('Lead');
+      else if (currentView === 'customers') renderCustomersList();
+      else if (currentView === 'bookings') renderBookingsWorkspace();
+      else if (currentView === 'catalog') renderCatalog();
+      else if (currentView === 'requests') renderRequestsList();
+      else if (currentView === 'quotes') renderQuotesList();
+      else renderInvoicesList();
+    });
+  });
+  document.getElementById('new-quote-btn').addEventListener('click', () => renderQuoteEditor(null));
+  document.getElementById('new-invoice-btn').addEventListener('click', () => renderInvoiceEditor(null));
+  document.getElementById('new-customer-btn').addEventListener('click', () => renderCustomerEditor());
+  document.getElementById('phone-inquiry-btn').addEventListener('click', renderPhoneInquiry);
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  renderSourceList('Lead');
+
+  // Register the service worker so the app can be "Added to Home
+  // Screen" and its shell can open even offline. This never affects
+  // the live JSONP calls to Apps Script — see sw.js for why.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        // Non-fatal: the app works fine without a service worker,
+        // e.g. when opened directly from a local file.
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

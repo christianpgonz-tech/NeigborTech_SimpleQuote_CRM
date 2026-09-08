@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeighborTech SimpleQuote — Branding & Settings</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f3f4f6; color: #111827;
+  }
+  header { background: #111827; color: white; padding: 16px 24px; }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #9ca3af; }
+  .layout { display: flex; gap: 20px; padding: 20px; align-items: flex-start; max-width: 1200px; margin: 0 auto; }
+  .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .controls { flex: 1; min-width: 420px; }
+  .preview-col { flex: 1; position: sticky; top: 20px; }
+  .steps-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .steps-nav button {
+    flex: 1; min-width: 100px; padding: 10px 8px; font-size: 12px; font-weight: 700;
+    border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer; color: #6b7280;
+  }
+  .steps-nav button.active { background: #2563eb; color: white; border-color: #2563eb; }
+  label.control { display: block; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
+  label.control span.hint { display: block; font-weight: normal; color: #6b7280; font-size: 12px; margin-top: 2px; }
+  input[type="text"], input[type="email"], input[type="number"], textarea, select {
+    width: 100%; margin-top: 6px; padding: 9px 11px; border: 1px solid #d1d5db;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  input[type="color"] { width: 50px; height: 34px; margin-top: 6px; padding: 0; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-row input[type="text"] { flex: 1; margin-top: 0; }
+  input[type="file"] { width: 100%; margin-top: 6px; font-size: 13px; }
+  .logo-preview { max-height: 60px; margin-top: 8px; display: block; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  button.btn {
+    font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px;
+    border-radius: 6px; border: 1px solid #d1d5db; background: white; cursor: pointer;
+  }
+  button.btn:hover { background: #f9fafb; }
+  button.btn-primary { background: #2563eb; color: white; border-color: #2563eb; }
+  button.btn-primary:hover { filter: brightness(0.95); }
+  button.small { padding: 5px 10px; font-size: 12px; }
+  .nav-row { display: flex; justify-content: space-between; margin-top: 20px; }
+  .status-line { font-size: 13px; margin-top: 12px; }
+  .status-line.success { color: #059669; }
+  .status-line.error { color: #dc2626; }
+
+  /* --- Live preview document --- */
+  .preview-doc {
+    background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 32px;
+    font-family: Georgia, serif; color: #1f2937; font-size: 13px;
+  }
+  .preview-doc { padding: 0; overflow: hidden; }
+  .preview-doc-top-bar { height: 8px; }
+  .preview-doc-inner { padding: 28px; }
+  .preview-doc .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+  .preview-doc .doc-header img { max-height: 50px; }
+  .preview-doc .biz-info { font-size: 12px; color: #4b5563; line-height: 1.5; }
+  .preview-doc .doc-title { font-size: 28px; font-weight: bold; text-align: right; letter-spacing: 0.08em; }
+  .preview-doc .doc-number { font-size: 13px; text-align: right; color: #6b7280; }
+  .preview-doc .customer-block { margin-bottom: 20px; font-size: 12px; }
+  .preview-doc table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .preview-doc th { text-align: left; padding: 10px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: white; }
+  .preview-doc td { padding: 8px 6px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+  .preview-doc .totals { max-width: 240px; margin-left: auto; font-size: 12px; }
+  .preview-doc .totals .row { display: flex; justify-content: space-between; padding: 5px 8px; }
+  .preview-doc .totals .row.total { font-weight: bold; font-size: 15px; border-radius: 4px; margin-top: 4px; padding: 8px; }
+  .preview-doc .terms { margin-top: 24px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+</style>
+</head>
+<body>
+<a href="app.html" id="back-to-dashboard" style="display:inline-flex;margin:18px 24px 0;text-decoration:none;color:#1d4ed8;font-weight:700;align-items:center;gap:6px;">← Back to Dashboard</a>
+
+<header>
+  <h1>NeighborTech SimpleQuote — Branding &amp; Settings</h1>
+  <p>Walk through each step, then Save. This controls how every quote/invoice looks and reads.</p>
+</header>
+
+<div class="layout">
+  <div class="panel controls">
+    <div class="steps-nav" id="steps-nav">
+      <button data-step="1" class="active">1. Business Info</button>
+      <button data-step="2">2. Branding</button>
+      <button data-step="3">3. Quote Terms</button>
+      <button data-step="4">4. Invoice Terms</button>
+    </div>
+    <div id="step-content"></div>
+    <p class="status-line" id="status-line"></p>
+  </div>
+
+  <div class="panel preview-col">
+    <h2 style="margin-top:0;font-size:15px;">Live Preview</h2>
+    <div class="preview-doc">
+      <div class="preview-doc-top-bar" id="preview-doc-top-bar"></div>
+      <div class="preview-doc-inner" id="preview-doc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (new URLSearchParams(location.search).get('demo') === '1' || document.referrer.includes('demo=1')) {
+    document.getElementById('back-to-dashboard').href = 'app.html?demo=1';
+  }
+  // ─────────────────────────────────────────────────────────
+  // CONFIG — same Apps Script URL as your main SimpleQuote app.
+  // ─────────────────────────────────────────────────────────
+  const CONFIG = {
+    apiUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+    adminKey: "PASTE_YOUR_PRIVATE_ADMIN_KEY_HERE"
+  };
+  // ─────────────────────────────────────────────────────────
+
+  let settings = {
+    Business_Name: '', Business_Address: '', Business_Phone: '', Business_Email: '', Business_Website: '',
+    Logo_URL: '', Primary_Color: '#2563eb',
+    Default_Tax_Rate: 8.5, Quote_Prefix: 'Q', Quote_Expiration_Days: 30, Quote_Terms: '',
+    Invoice_Prefix: 'INV', Invoice_Due_Days: 14, Payment_Instructions: '', Invoice_Terms: '',
+    Currency: 'USD'
+  };
+  let currentStep = 1;
+
+  // ---- JSONP (same pattern as the main app) ----
+  let jsonpCounter = 0;
+  function callApi(action, params) {
+    return new Promise((resolve) => {
+      const callbackName = 'swCallback' + (jsonpCounter++);
+      window[callbackName] = function (result) {
+        delete window[callbackName];
+        script.remove();
+        resolve(result);
+      };
+      const query = Object.assign({ action, callback: callbackName, adminKey: CONFIG.adminKey }, params || {});
+      const queryString = Object.keys(query).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(query[k])).join('&');
+      const script = document.createElement('script');
+      script.src = CONFIG.apiUrl + '?' + queryString;
+      script.onerror = () => { delete window[callbackName]; resolve({ success: false, error: 'Could not reach the server.' }); };
+      document.body.appendChild(script);
+    });
+  }
+
+  function el(tag, props, children) {
+    const e = document.createElement(tag);
+    Object.assign(e, props || {});
+    (children || []).forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+    return e;
+  }
+  function fileToDataUrl(file, cb) {
+    const reader = new FileReader();
+    reader.onload = () => cb(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  function field(labelText, hint, value, onChange, type) {
+    const wrapper = el('label', { className: 'control' });
+    wrapper.appendChild(document.createTextNode(labelText));
+    if (hint) { const h = el('span', { className: 'hint' }); h.textContent = hint; wrapper.appendChild(h); }
+    const isTextarea = type === 'textarea';
+    const input = isTextarea
+      ? el('textarea', { value: value || '' })
+      : el('input', { type: type || 'text', value: value || '' });
+    if (isTextarea) input.value = value || '';
+    input.addEventListener('input', () => { onChange(input.value); renderPreview(); });
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+  function numberField(labelText, value, onChange) {
+    const wrapper = el('label', { className: 'control' });
+    wrapper.appendChild(document.createTextNode(labelText));
+    const input = el('input', { type: 'number', value: value });
+    input.addEventListener('input', () => { onChange(input.value); renderPreview(); });
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+  function colorField(labelText, value, onChange) {
+    const wrapper = el('label', { className: 'control' });
+    wrapper.appendChild(document.createTextNode(labelText));
+    const row = el('div', { className: 'color-row' });
+    const colorInput = el('input', { type: 'color', value: value });
+    const textInput = el('input', { type: 'text', value: value });
+    colorInput.addEventListener('input', () => { textInput.value = colorInput.value; onChange(colorInput.value); renderPreview(); });
+    textInput.addEventListener('input', () => { onChange(textInput.value); renderPreview(); });
+    row.appendChild(colorInput);
+    row.appendChild(textInput);
+    wrapper.appendChild(row);
+    return wrapper;
+  }
+
+  function renderStepContent() {
+    const container = document.getElementById('step-content');
+    container.innerHTML = '';
+
+    if (currentStep === 1) {
+      container.appendChild(field('Business Name', '', settings.Business_Name, v => settings.Business_Name = v));
+      container.appendChild(field('Address', '', settings.Business_Address, v => settings.Business_Address = v));
+      const row = el('div', { className: 'field-row' });
+      row.appendChild(field('Phone', '', settings.Business_Phone, v => settings.Business_Phone = v));
+      row.appendChild(field('Email', '', settings.Business_Email, v => settings.Business_Email = v, 'email'));
+      container.appendChild(row);
+      container.appendChild(field('Website', '', settings.Business_Website, v => settings.Business_Website = v));
+    }
+
+    if (currentStep === 2) {
+      const logoWrap = el('label', { className: 'control' });
+      logoWrap.appendChild(document.createTextNode('Logo'));
+      const logoHint = el('span', { className: 'hint' });
+      logoHint.textContent = 'Appears at the top of every quote and invoice.';
+      logoWrap.appendChild(logoHint);
+      const logoInput = el('input', { type: 'file', accept: 'image/*' });
+      logoInput.addEventListener('change', () => {
+        const f = logoInput.files[0];
+        if (!f) return;
+        fileToDataUrl(f, (dataUrl) => { settings.Logo_URL = dataUrl; renderStepContent(); renderPreview(); });
+      });
+      logoWrap.appendChild(logoInput);
+      if (settings.Logo_URL) {
+        logoWrap.appendChild(el('img', { className: 'logo-preview', src: settings.Logo_URL }));
+        const removeBtn = el('button', { className: 'btn small', type: 'button', style: 'margin-top:8px;' });
+        removeBtn.textContent = 'Remove Logo';
+        removeBtn.addEventListener('click', () => { settings.Logo_URL = ''; renderStepContent(); renderPreview(); });
+        logoWrap.appendChild(removeBtn);
+      }
+      container.appendChild(logoWrap);
+
+      container.appendChild(colorField('Primary Color', settings.Primary_Color, v => settings.Primary_Color = v));
+
+      const currencyWrap = el('label', { className: 'control' });
+      currencyWrap.appendChild(document.createTextNode('Currency'));
+      const currencySelect = el('select');
+      ['USD', 'EUR', 'GBP'].forEach(c => {
+        const o = el('option', { value: c }); o.textContent = c;
+        if (c === settings.Currency) o.selected = true;
+        currencySelect.appendChild(o);
+      });
+      currencySelect.addEventListener('change', () => { settings.Currency = currencySelect.value; renderPreview(); });
+      currencyWrap.appendChild(currencySelect);
+      container.appendChild(currencyWrap);
+    }
+
+    if (currentStep === 3) {
+      const row = el('div', { className: 'field-row' });
+      row.appendChild(field('Quote Number Prefix', 'e.g. "Q" makes Q-2026-0001', settings.Quote_Prefix, v => settings.Quote_Prefix = v));
+      row.appendChild(numberField('Expires After (days)', settings.Quote_Expiration_Days, v => settings.Quote_Expiration_Days = v));
+      container.appendChild(row);
+      container.appendChild(numberField('Default Tax Rate (%)', settings.Default_Tax_Rate, v => settings.Default_Tax_Rate = v));
+      container.appendChild(field(
+        'Quote Terms & Conditions', 'Shown on every quote. Since customers accept by phone/email rather than a web form, make sure pricing validity, deposit requirements, and any other contractual language customers need is spelled out here.',
+        settings.Quote_Terms, v => settings.Quote_Terms = v, 'textarea'
+      ));
+    }
+
+    if (currentStep === 4) {
+      const row = el('div', { className: 'field-row' });
+      row.appendChild(field('Invoice Number Prefix', 'e.g. "INV" makes INV-2026-0001', settings.Invoice_Prefix, v => settings.Invoice_Prefix = v));
+      row.appendChild(numberField('Due After (days)', settings.Invoice_Due_Days, v => settings.Invoice_Due_Days = v));
+      container.appendChild(row);
+      container.appendChild(field('Payment Instructions', 'e.g. "Venmo @yourbusiness" or "Check payable to..."', settings.Payment_Instructions, v => settings.Payment_Instructions = v, 'textarea'));
+      container.appendChild(field('Invoice Terms', '', settings.Invoice_Terms, v => settings.Invoice_Terms = v, 'textarea'));
+    }
+  }
+
+  function currencySymbol() {
+    return settings.Currency === 'EUR' ? '\u20ac' : settings.Currency === 'GBP' ? '\u00a3' : '$';
+  }
+
+  function renderPreview() {
+    const doc = document.getElementById('preview-doc');
+    document.getElementById('preview-doc-top-bar').style.background = settings.Primary_Color;
+    const sym = currencySymbol();
+    const isInvoiceStep = currentStep === 4;
+    const docTitle = isInvoiceStep ? 'INVOICE' : 'QUOTE';
+    const docNumber = isInvoiceStep ? (settings.Invoice_Prefix || 'INV') + '-2026-0001' : (settings.Quote_Prefix || 'Q') + '-2026-0001';
+    const termsText = isInvoiceStep ? (settings.Invoice_Terms || '') : (settings.Quote_Terms || '');
+    const extraLine = isInvoiceStep && settings.Payment_Instructions ? ('<div style="margin-top:6px;">' + settings.Payment_Instructions + '</div>') : '';
+
+    doc.innerHTML = `
+      <div class="doc-header">
+        <div>
+          ${settings.Logo_URL ? '<img src="' + settings.Logo_URL + '">' : ''}
+          <div class="biz-info" style="margin-top:8px;">
+            <strong>${settings.Business_Name || 'Your Business Name'}</strong><br>
+            ${settings.Business_Address || ''}<br>
+            ${settings.Business_Phone || ''} ${settings.Business_Email ? ' \u00b7 ' + settings.Business_Email : ''}
+          </div>
+        </div>
+        <div>
+          <div class="doc-title" style="color:${settings.Primary_Color}">${docTitle}</div>
+          <div class="doc-number">${docNumber}</div>
+        </div>
+      </div>
+      <div class="customer-block">
+        <strong>Bill To:</strong><br>Sample Customer<br>customer@example.com
+      </div>
+      <table>
+        <tr style="background:${settings.Primary_Color}">
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Rate</th>
+          <th>Amount</th>
+        </tr>
+        <tr><td>Sample Service</td><td>2</td><td>${sym}85.00</td><td>${sym}170.00</td></tr>
+      </table>
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>${sym}170.00</span></div>
+        <div class="row"><span>Tax</span><span>${sym}${(170 * (parseFloat(settings.Default_Tax_Rate || 0) / 100)).toFixed(2)}</span></div>
+        <div class="row total" style="background:${settings.Primary_Color}1a;color:${settings.Primary_Color}"><span>Total</span><span>${sym}${(170 + 170 * (parseFloat(settings.Default_Tax_Rate || 0) / 100)).toFixed(2)}</span></div>
+      </div>
+      <div class="terms">${termsText.replace(/\n/g, '<br>')}${extraLine}</div>
+    `;
+  }
+
+  document.querySelectorAll('#steps-nav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentStep = parseInt(btn.dataset.step, 10);
+      document.querySelectorAll('#steps-nav button').forEach(b => b.classList.toggle('active', b === btn));
+      renderStepContent();
+      renderPreview();
+    });
+  });
+
+  const navRow = el('div', { className: 'nav-row' });
+  const saveBtn = el('button', { className: 'btn btn-primary' });
+  saveBtn.textContent = 'Save Settings';
+  const statusLine = document.getElementById('status-line');
+  saveBtn.addEventListener('click', async () => {
+    statusLine.textContent = 'Saving...';
+    statusLine.className = 'status-line';
+    const result = await callApi('save_settings', { data: encodeURIComponent(JSON.stringify(settings)) });
+    if (result.success) {
+      settings = result.data;
+      statusLine.textContent = 'Saved!';
+      statusLine.className = 'status-line success';
+    } else {
+      statusLine.textContent = 'Error: ' + result.error;
+      statusLine.className = 'status-line error';
+    }
+  });
+  navRow.appendChild(saveBtn);
+  document.getElementById('step-content').parentNode.insertBefore(navRow, statusLine);
+
+  async function init() {
+    const result = await callApi('get_settings');
+    if (result.success && result.data && Object.keys(result.data).length > 0) {
+      settings = Object.assign(settings, result.data);
+    }
+    renderStepContent();
+    renderPreview();
+  }
+  init();
+</script>
+
+</body>
+</html>

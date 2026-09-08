@@ -1,0 +1,573 @@
+<!--
+  Simple Appointment Booking — Multi-Step Wizard with Real Calendar
+  Availability
+
+  Drop this block into your website's HTML wherever you want the
+  booking form to appear. Everything is controlled from the CONFIG
+  block below.
+
+  Prefer a visual editor instead? Open website/booking-builder.html in
+  your browser — same result, no code editing needed.
+
+  IMPORTANT: this form expects the matching apps-script/Code.gs to be
+  deployed with a SERVICES list already configured there (services,
+  durations, availability blocks) — the booking builder generates
+  both files together so they always match.
+-->
+
+<style>
+  .booking-widget {
+    --bk-primary-color: #2563eb;
+    --bk-bg-color: #ffffff;
+    --bk-text-color: #111111;
+    --bk-border-color: #d1d5db;
+    --bk-font-family: inherit;
+    --bk-border-radius: 8px;
+
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bk-bg-color);
+    background-size: cover;
+    background-position: center;
+    color: var(--bk-text-color);
+    font-family: var(--bk-font-family);
+    border-radius: var(--bk-border-radius);
+    box-sizing: border-box;
+  }
+  .booking-widget * { box-sizing: border-box; }
+  .booking-widget .bk-logo { display: block; margin: 0 auto 16px; }
+  .booking-widget h2 { margin: 0 0 4px 0; font-size: 20px; }
+  .booking-widget .bk-step-label { font-size: 12px; color: var(--bk-text-color); opacity: 0.6; margin-bottom: 16px; }
+  .booking-widget label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+  .booking-widget input, .booking-widget select, .booking-widget textarea {
+    font-family: var(--bk-font-family); font-size: 15px; font-weight: normal;
+    padding: 10px 12px; border: 1px solid var(--bk-border-color);
+    border-radius: var(--bk-border-radius); background-color: #ffffff;
+    color: #111111; width: 100%;
+  }
+  .booking-widget textarea { min-height: 80px; resize: vertical; }
+  .booking-widget input:focus, .booking-widget select:focus, .booking-widget textarea:focus {
+    outline: none; border-color: var(--bk-primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bk-primary-color) 20%, transparent);
+  }
+  .booking-widget button {
+    padding: 12px 16px; font-size: 15px; font-weight: 600;
+    font-family: var(--bk-font-family); color: #ffffff;
+    background-color: var(--bk-primary-color); border: none;
+    border-radius: var(--bk-border-radius); cursor: pointer;
+  }
+  .booking-widget button:hover { filter: brightness(0.92); }
+  .booking-widget button.bk-secondary {
+    background: transparent; color: var(--bk-text-color);
+    border: 1px solid var(--bk-border-color);
+  }
+  .booking-widget button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .booking-widget .bk-nav-row { display: flex; gap: 10px; margin-top: 8px; }
+  .booking-widget .bk-nav-row button { flex: 1; }
+  .booking-widget .bk-service-card {
+    display: block; width: 100%; text-align: left;
+    padding: 14px; margin-bottom: 10px;
+    border: 1px solid var(--bk-border-color); border-radius: var(--bk-border-radius);
+    background: #fff; color: #111111; cursor: pointer; font-family: var(--bk-font-family);
+  }
+  .booking-widget .bk-service-card:hover { border-color: var(--bk-primary-color); }
+  .booking-widget .bk-service-card.selected { border-color: var(--bk-primary-color); border-width: 2px; background: color-mix(in srgb, var(--bk-primary-color) 6%, white); }
+  .booking-widget .bk-service-name { font-weight: 700; font-size: 15px; }
+  .booking-widget .bk-service-meta { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+  .booking-widget .bk-day-group { margin-bottom: 14px; }
+  .booking-widget .bk-day-label { font-size: 12px; font-weight: 700; opacity: 0.6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .booking-widget .bk-slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .booking-widget .bk-slot-btn {
+    padding: 8px 12px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--bk-border-color); border-radius: 6px;
+    background: #fff; color: #111111; cursor: pointer;
+  }
+  .booking-widget .bk-slot-btn:hover { border-color: var(--bk-primary-color); }
+  .booking-widget .bk-slot-btn.selected { background: var(--bk-primary-color); color: #fff; border-color: var(--bk-primary-color); }
+  .booking-widget .bk-slots-wrap { max-height: 320px; overflow-y: auto; margin-bottom: 14px; }
+  .booking-widget .bk-empty-note { font-size: 13px; opacity: 0.7; text-align: center; padding: 20px 0; }
+  .booking-widget .bk-summary { font-size: 13px; color: #111111; background: color-mix(in srgb, var(--bk-primary-color) 8%, white); padding: 10px 12px; border-radius: var(--bk-border-radius); margin-bottom: 14px; }
+  .booking-widget .bk-status { font-size: 14px; text-align: center; min-height: 18px; }
+  .booking-widget .bk-footer { margin-top: 12px; font-size: 12px; font-weight: normal; text-align: center; opacity: 0.75; }
+</style>
+
+<div class="booking-widget" id="booking-widget">
+  <img id="bk-logo" src="" alt="" style="display:none;" class="bk-logo">
+  <h2 id="bk-title"></h2>
+  <div class="bk-step-label" id="bk-step-label"></div>
+  <div id="bk-step-content"></div>
+  <p class="bk-footer" id="bk-footer"></p>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  // CONFIG — edit everything here. Nothing below this block
+  // should need to change.
+  // ─────────────────────────────────────────────────────────
+  const CONFIG = {
+    // Replace with your deployed Apps Script /exec URL
+    scriptUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+
+    logo: { url: "", maxHeight: "40px" },
+    title: "Request an Appointment",
+    footer: "Your appointment is confirmed instantly once you pick a time.",
+    successMessage: "You're booked! We've added this to our calendar and will see you then.",
+    errorMessage: "Something went wrong. Please try again or contact us directly.",
+
+    // Extra field(s) shown on the last step, alongside Notes/Address.
+    // Same shape as before: label must match a Sheet column header.
+    extraFields: [],
+
+    theme: {
+      primaryColor: "#2563eb",
+      textColor: "#111111",
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+      backgroundType: "solid",
+      backgroundColor: "#ffffff",
+      backgroundImageUrl: "",
+      fontFamily: "inherit",
+      googleFont: { name: "Inter", url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" },
+      customFontFile: { name: "", url: "" }
+    }
+  };
+  // ─────────────────────────────────────────────────────────
+
+  const widgetEl = document.getElementById('booking-widget');
+
+  if (CONFIG.logo && CONFIG.logo.url) {
+    const logoEl = document.getElementById('bk-logo');
+    logoEl.src = CONFIG.logo.url;
+    logoEl.style.maxHeight = CONFIG.logo.maxHeight || '40px';
+    logoEl.style.display = '';
+  }
+
+  widgetEl.style.setProperty('--bk-primary-color', CONFIG.theme.primaryColor);
+  widgetEl.style.setProperty('--bk-text-color', CONFIG.theme.textColor);
+  widgetEl.style.setProperty('--bk-border-color', CONFIG.theme.borderColor);
+  widgetEl.style.setProperty('--bk-border-radius', CONFIG.theme.borderRadius);
+
+  if (CONFIG.theme.backgroundType === 'transparent') {
+    widgetEl.style.setProperty('--bk-bg-color', 'transparent');
+  } else if (CONFIG.theme.backgroundType === 'image' && CONFIG.theme.backgroundImageUrl) {
+    widgetEl.style.setProperty('--bk-bg-color', 'transparent');
+    widgetEl.style.backgroundImage = 'url("' + CONFIG.theme.backgroundImageUrl + '")';
+  } else {
+    widgetEl.style.setProperty('--bk-bg-color', CONFIG.theme.backgroundColor);
+  }
+
+  if (CONFIG.theme.googleFont && CONFIG.theme.googleFont.url) {
+    const linkEl = document.createElement('link');
+    linkEl.rel = 'stylesheet';
+    linkEl.href = CONFIG.theme.googleFont.url;
+    document.head.appendChild(linkEl);
+    widgetEl.style.setProperty('--bk-font-family', "'" + CONFIG.theme.googleFont.name + "', sans-serif");
+  } else if (CONFIG.theme.customFontFile && CONFIG.theme.customFontFile.url) {
+    const fontName = CONFIG.theme.customFontFile.name || 'CustomBrandFont';
+    const styleEl = document.createElement('style');
+    styleEl.textContent = '@font-face { font-family: "' + fontName + '"; src: url("' + CONFIG.theme.customFontFile.url + '"); }';
+    document.head.appendChild(styleEl);
+    widgetEl.style.setProperty('--bk-font-family', "'" + fontName + "', sans-serif");
+  } else {
+    widgetEl.style.setProperty('--bk-font-family', CONFIG.theme.fontFamily);
+  }
+
+  const titleEl = document.getElementById('bk-title');
+  if (CONFIG.title) { titleEl.textContent = CONFIG.title; } else { titleEl.style.display = 'none'; }
+
+  const footerEl = document.getElementById('bk-footer');
+  if (CONFIG.footer) { footerEl.textContent = CONFIG.footer; } else { footerEl.style.display = 'none'; }
+
+  // ─────────────────────────────────────────────────────────
+  // Wizard state
+  // ─────────────────────────────────────────────────────────
+  const state = {
+    step: 1,
+    name: '', phone: '', email: '',
+    services: [],       // fetched from the backend
+    selectedService: null,
+    slots: [],          // fetched from the backend for selectedService
+    selectedSlot: null,
+    address: '', notes: '',
+    extraValues: {}
+  };
+
+  const stepLabelEl = document.getElementById('bk-step-label');
+  const contentEl = document.getElementById('bk-step-content');
+
+  function setStepLabel(text) { stepLabelEl.textContent = text; }
+
+  // Appends a query parameter to a URL, using "?" if this is the
+  // first parameter or "&" if the URL already has one.
+  function withParam(url, param) {
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + param;
+  }
+
+  // JSONP helper — avoids CORS entirely, since <script> tags aren't
+  // subject to the CORS restrictions fetch()/XHR are.
+  let jsonpCounter = 0;
+  function jsonp(url, onData) {
+    const callbackName = 'bkCallback' + (jsonpCounter++);
+    window[callbackName] = function (data) {
+      delete window[callbackName];
+      script.remove();
+      onData(data);
+    };
+    const script = document.createElement('script');
+    script.src = withParam(url, 'callback=' + callbackName);
+    script.onerror = function () {
+      delete window[callbackName];
+      onData({ error: 'Could not reach the booking server.' });
+    };
+    document.body.appendChild(script);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 1 — contact info
+  // ─────────────────────────────────────────────────────────
+  function renderStep1() {
+    setStepLabel('Step 1 of 4 - Your Info');
+    contentEl.innerHTML = '';
+
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Name *';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.value = state.name;
+    nameInput.addEventListener('input', () => state.name = nameInput.value);
+    nameLabel.appendChild(nameInput);
+
+    const phoneLabel = document.createElement('label');
+    phoneLabel.textContent = 'Phone *';
+    const phoneInput = document.createElement('input');
+    phoneInput.type = 'tel'; phoneInput.value = state.phone;
+    phoneInput.addEventListener('input', () => state.phone = phoneInput.value);
+    phoneLabel.appendChild(phoneInput);
+
+    const emailLabel = document.createElement('label');
+    emailLabel.textContent = 'Email';
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email'; emailInput.value = state.email;
+    emailInput.addEventListener('input', () => state.email = emailInput.value);
+    emailLabel.appendChild(emailInput);
+
+    contentEl.appendChild(nameLabel);
+    contentEl.appendChild(phoneLabel);
+    contentEl.appendChild(emailLabel);
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.addEventListener('click', () => {
+      if (!state.name || !state.phone) {
+        showStatus('Please fill in your name and phone number.', true);
+        return;
+      }
+      clearStatus();
+      state.step = 2;
+      renderStep2();
+    });
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 2 — choose service
+  // ─────────────────────────────────────────────────────────
+  function renderStep2() {
+    setStepLabel('Step 2 of 4 - Choose a Service');
+    contentEl.innerHTML = '<p class="bk-empty-note">Loading services...</p>';
+
+    if (state.services.length > 0) {
+      renderStep2Content();
+      return;
+    }
+
+    jsonp(withParam(CONFIG.scriptUrl, 'action=services'), function (data) {
+      if (data.error) {
+        contentEl.innerHTML = '';
+        showStatus('Could not load services: ' + data.error, true);
+        return;
+      }
+      state.services = data.services || [];
+      renderStep2Content();
+    });
+  }
+
+  function renderStep2Content() {
+    contentEl.innerHTML = '';
+
+    state.services.forEach(function (service) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'bk-service-card' + (state.selectedService && state.selectedService.name === service.name ? ' selected' : '');
+      card.innerHTML = '<div class="bk-service-name"></div><div class="bk-service-meta"></div>';
+      card.querySelector('.bk-service-name').textContent = service.name;
+      card.querySelector('.bk-service-meta').textContent = service.durationMinutes + ' minutes';
+      card.addEventListener('click', () => {
+        state.selectedService = service;
+        state.selectedSlot = null;
+        state.slots = [];
+        renderStep2Content();
+      });
+      contentEl.appendChild(card);
+    });
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 1; renderStep1(); });
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = !state.selectedService;
+    nextBtn.addEventListener('click', () => {
+      if (!state.selectedService) return;
+      clearStatus();
+      state.step = 3;
+      renderStep3();
+    });
+    navRow.appendChild(backBtn);
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 3 — pick an available time slot (real calendar availability)
+  // ─────────────────────────────────────────────────────────
+  function renderStep3() {
+    setStepLabel('Step 3 of 4 - Pick a Time');
+    contentEl.innerHTML = '<p class="bk-empty-note">Checking availability...</p>';
+
+    if (state.slots.length > 0) {
+      renderStep3Content();
+      return;
+    }
+
+    const url = withParam(CONFIG.scriptUrl, 'action=availability&service=' + encodeURIComponent(state.selectedService.name));
+    jsonp(url, function (data) {
+      if (data.error) {
+        contentEl.innerHTML = '';
+        showStatus('Could not load availability: ' + data.error, true);
+        return;
+      }
+      state.slots = data.slots || [];
+      renderStep3Content();
+    });
+  }
+
+  function groupSlotsByDay(slots) {
+    const groups = {};
+    const order = [];
+    slots.forEach(function (slot) {
+      const dayKey = slot.label.split(' - ')[0]; // "Tue, Sep 10"
+      if (!groups[dayKey]) { groups[dayKey] = []; order.push(dayKey); }
+      groups[dayKey].push(slot);
+    });
+    return order.map(function (key) { return { day: key, slots: groups[key] }; });
+  }
+
+  function renderStep3Content() {
+    contentEl.innerHTML = '';
+
+    if (state.slots.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'bk-empty-note';
+      empty.textContent = 'No open times found for this service right now. Please try a different service or check back soon.';
+      contentEl.appendChild(empty);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'bk-slots-wrap';
+
+      groupSlotsByDay(state.slots).forEach(function (group) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'bk-day-group';
+        const dayLabel = document.createElement('div');
+        dayLabel.className = 'bk-day-label';
+        dayLabel.textContent = group.day;
+        dayDiv.appendChild(dayLabel);
+
+        const grid = document.createElement('div');
+        grid.className = 'bk-slot-grid';
+        group.slots.forEach(function (slot) {
+          const timeLabel = slot.label.split(' - ')[1]; // "9:00 AM"
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'bk-slot-btn' + (state.selectedSlot && state.selectedSlot.startIso === slot.startIso ? ' selected' : '');
+          btn.textContent = timeLabel;
+          btn.addEventListener('click', () => {
+            state.selectedSlot = slot;
+            renderStep3Content();
+          });
+          grid.appendChild(btn);
+        });
+        dayDiv.appendChild(grid);
+        wrap.appendChild(dayDiv);
+      });
+
+      contentEl.appendChild(wrap);
+    }
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 2; renderStep2(); });
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = !state.selectedSlot;
+    nextBtn.addEventListener('click', () => {
+      if (!state.selectedSlot) return;
+      clearStatus();
+      state.step = 4;
+      renderStep4();
+    });
+    navRow.appendChild(backBtn);
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 4 — address (if needed), notes, extra fields, submit
+  // ─────────────────────────────────────────────────────────
+  function renderStep4() {
+    setStepLabel('Step 4 of 4 - Final Details');
+    contentEl.innerHTML = '';
+
+    const summary = document.createElement('div');
+    summary.className = 'bk-summary';
+    summary.textContent = state.selectedService.name + ' - ' + state.selectedSlot.label;
+    contentEl.appendChild(summary);
+
+    if (state.selectedService.requiresAddress) {
+      const addrLabel = document.createElement('label');
+      addrLabel.textContent = 'Address *';
+      const addrInput = document.createElement('input');
+      addrInput.type = 'text'; addrInput.value = state.address;
+      addrInput.placeholder = 'Where the service is needed';
+      addrInput.addEventListener('input', () => state.address = addrInput.value);
+      addrLabel.appendChild(addrInput);
+      contentEl.appendChild(addrLabel);
+    }
+
+    (CONFIG.extraFields || []).forEach(function (field, i) {
+      const label = document.createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      let input;
+      if (field.type === 'select') {
+        input = document.createElement('select');
+        const blank = document.createElement('option');
+        blank.value = ''; blank.textContent = '-- Select --';
+        input.appendChild(blank);
+        (field.options || []).forEach(function (opt) {
+          const o = document.createElement('option'); o.value = opt; o.textContent = opt;
+          input.appendChild(o);
+        });
+      } else if (field.type === 'textarea') {
+        input = document.createElement('textarea');
+      } else {
+        input = document.createElement('input');
+        input.type = field.type || 'text';
+      }
+      input.value = state.extraValues[field.label] || '';
+      input.addEventListener('input', () => state.extraValues[field.label] = input.value);
+      label.appendChild(input);
+      contentEl.appendChild(label);
+    });
+
+    const notesLabel = document.createElement('label');
+    notesLabel.textContent = 'Notes';
+    const notesInput = document.createElement('textarea');
+    notesInput.value = state.notes;
+    notesInput.placeholder = 'Anything we should know before your appointment';
+    notesInput.addEventListener('input', () => state.notes = notesInput.value);
+    notesLabel.appendChild(notesInput);
+    contentEl.appendChild(notesLabel);
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 3; renderStep3(); });
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Confirm Booking';
+    submitBtn.addEventListener('click', submitBooking);
+    navRow.appendChild(backBtn);
+    navRow.appendChild(submitBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  function submitBooking() {
+    if (state.selectedService.requiresAddress && !state.address) {
+      showStatus('Please enter an address.', true);
+      return;
+    }
+
+    const fields = {
+      Name: state.name,
+      Phone: state.phone,
+      Email: state.email,
+      Address: state.address,
+      Notes: state.notes
+    };
+    Object.assign(fields, state.extraValues);
+
+    const payload = {
+      fields: fields,
+      service: state.selectedService.name,
+      slotStart: state.selectedSlot.startIso,
+      slotEnd: state.selectedSlot.endIso,
+      sourcePage: window.location.href
+    };
+
+    showStatus('Booking your appointment...', false);
+
+    fetch(CONFIG.scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        contentEl.innerHTML = '';
+        stepLabelEl.textContent = '';
+        showStatus(CONFIG.successMessage, false);
+      })
+      .catch(() => {
+        showStatus(CONFIG.errorMessage, true);
+      });
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Status line (shared across steps)
+  // ─────────────────────────────────────────────────────────
+  let statusText = '';
+  let statusIsError = false;
+  function showStatus(text, isError) { statusText = text; statusIsError = isError; renderStatusEl(); }
+  function clearStatus() { statusText = ''; renderStatusEl(); }
+  function renderStatusEl() {
+    let el = document.getElementById('bk-status-line');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'bk-status-line';
+      el.className = 'bk-status';
+      contentEl.parentNode.insertBefore(el, footerEl);
+    }
+    el.textContent = statusText;
+    el.style.color = statusIsError ? '#b91c1c' : '';
+  }
+
+  // Start the wizard
+  renderStep1();
+</script>

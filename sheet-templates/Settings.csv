@@ -1,0 +1,2 @@
+Business_Name,Business_Address,Business_Phone,Business_Email,Business_Website,Logo_URL,Primary_Color,Default_Tax_Rate,Quote_Prefix,Invoice_Prefix,Quote_Expiration_Days,Invoice_Due_Days,Currency,Payment_Instructions,Quote_Terms,Invoice_Terms
+Your Business Name,123 Main St,555-123-4567,you@example.com,https://example.com,,#2563eb,8.5,Q,INV,30,14,USD,Pay via check or Venmo @yourbusiness,Prices valid for 30 days from quote date. A 50% deposit is required to schedule work.,Payment due within 14 days of invoice date.

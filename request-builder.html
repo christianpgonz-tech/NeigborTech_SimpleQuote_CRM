@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quote Request Builder</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  header {
+    background: #111827;
+    color: white;
+    padding: 16px 24px;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #9ca3af; }
+  .intro {
+    margin: 16px 24px 0;
+    padding: 14px 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1e3a8a;
+    line-height: 1.5;
+  }
+  .layout {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    align-items: flex-start;
+  }
+  .panel {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .controls {
+    flex: 1;
+    min-width: 380px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .preview-col {
+    flex: 1;
+    position: sticky;
+    top: 20px;
+  }
+  .preview-col h2 { margin-top: 0; font-size: 15px; color: #374151; }
+  iframe {
+    width: 100%;
+    height: 640px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background:
+      repeating-conic-gradient(#f0f0f0 0% 25%, #ffffff 0% 50%) 50% / 16px 16px;
+  }
+  section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  section:last-of-type { border-bottom: none; }
+  section h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin: 0 0 12px;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: -6px 0 12px;
+    line-height: 1.4;
+  }
+  label.control {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  label.control span.hint {
+    display: block;
+    font-weight: normal;
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  input[type="text"], input[type="url"], textarea, select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input[type="color"] {
+    width: 48px;
+    height: 32px;
+    margin-top: 6px;
+    padding: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  input[type="file"] {
+    width: 100%;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-row input[type="text"] { flex: 1; margin-top: 0; }
+  .field-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #fafafa;
+  }
+  .field-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .field-card-top strong { font-size: 13px; }
+  .field-row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .field-row > div { flex: 1; }
+  .checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: normal; }
+  .radio-group { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: normal; margin-bottom: 10px; }
+  .radio-group label { display: flex; align-items: center; gap: 6px; font-weight: normal; }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+  }
+  button:hover { background: #f3f4f6; }
+  button.primary {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+  }
+  button.primary:hover { filter: brightness(0.95); }
+  button.danger { color: #b91c1c; border-color: #fecaca; }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  .add-field-btn { width: 100%; margin-top: 4px; }
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .actions button { flex: 1; }
+  #copy-status { font-size: 12px; color: #059669; margin-left: 8px; }
+  .font-extra, .bg-extra, .logo-extra { margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; }
+  .option-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .option-row input { margin-top: 0; flex: 1; }
+  .logo-preview { max-height: 60px; margin-top: 8px; display: block; }
+  .bg-preview { max-height: 60px; margin-top: 8px; display: block; border-radius: 6px; }
+
+  .label-row { display: flex; align-items: center; gap: 6px; }
+  .help-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .help-btn:hover { background: #d1d5db; }
+  .help-box {
+    display: none;
+    margin-top: 8px;
+    padding: 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: normal;
+    color: #78350f;
+    line-height: 1.5;
+  }
+  .help-box.open { display: block; }
+  .help-box ol { margin: 6px 0 0; padding-left: 18px; }
+  .help-box li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Quote Request Builder</h1>
+  <p>Edit on the left, see it update live on the right. When you're happy, download the finished file.</p>
+</header>
+
+<div class="intro">
+  <strong>How this works:</strong> everything you change here updates the preview on the right instantly.
+  Nothing is saved anywhere until you click a download button — those give you the files you need:
+  <strong>request-form.html</strong> (the form itself), <strong>quote-requests-template.csv</strong> (matching Google Sheet
+  columns), and <strong>Code.gs</strong> (the backend script that goes into Google Apps Script). You can reopen
+  this builder anytime to make more changes.
+</div>
+
+<div class="layout">
+
+  <div class="panel controls" id="controls"></div>
+
+  <div class="panel preview-col">
+    <h2>Live Preview</h2>
+    <iframe id="preview-frame"></iframe>
+    <div class="actions">
+      <button class="primary" id="download-btn">Download request-form.html</button>
+      <button id="copy-btn">Copy Code</button>
+    </div>
+    <div class="actions">
+      <button id="download-csv-btn">Download Quote_Requests Sheet Tab Template (CSV)</button>
+    </div>
+    <span id="copy-status"></span>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  // STATE — this mirrors the CONFIG object in request-form.html
+  // ============================================================
+  let state = {
+    scriptUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+    logo: { url: "", maxHeight: "48px" },
+    title: "Request a Quote",
+    footer: "We'll review your request and follow up with a quote shortly.",
+    submitButtonText: "Request Quote",
+    successMessage: "Thank you! We've received your request and will follow up with a quote soon.",
+    errorMessage: "Something went wrong. Please try again or contact us directly.",
+    fields: [
+      { label: "Name", type: "text", required: true, placeholder: "" },
+      { label: "Email", type: "email", required: true, placeholder: "" },
+      { label: "Phone", type: "tel", required: false, placeholder: "" },
+      {
+        label: "What do you need?", type: "select", required: true, placeholder: "",
+        options: [
+          "House Cleaning",
+          "Handyman Repair",
+          "Tutoring",
+          "Mobile Detailing",
+          "Lawn & Landscaping",
+          "Tech Support",
+          "Other"
+        ]
+      },
+      { label: "Details", type: "textarea", required: false, placeholder: "Tell us more about what you need" }
+    ],
+    theme: {
+      primaryColor: "#2563eb",
+      textColor: "#111111",
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+      backgroundType: "solid",
+      backgroundColor: "#ffffff",
+      backgroundImageUrl: "",
+      fontFamily: "inherit",
+      googleFont: { name: "Inter", url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" },
+      customFontFile: { name: "", url: "" }
+    }
+  };
+
+  // Which font mode is active: "google" | "custom" | "plain"
+  let fontMode = "google";
+
+
+  // ============================================================
+  // ENGINE — identical to the logic in request-form.html. Kept as a
+  // string so the generated output file is self-contained and
+  // matches exactly what's previewed here.
+  // ============================================================
+  const ENGINE_SCRIPT = `
+  const widgetEl = document.getElementById('qr-widget');
+
+  if (CONFIG.logo && CONFIG.logo.url) {
+    const logoImg = document.createElement('img');
+    logoImg.src = CONFIG.logo.url;
+    logoImg.className = 'qr-logo';
+    logoImg.style.maxHeight = CONFIG.logo.maxHeight || '48px';
+    logoImg.alt = 'Logo';
+    widgetEl.insertBefore(logoImg, widgetEl.firstChild);
+  }
+
+  widgetEl.style.setProperty('--qr-primary-color', CONFIG.theme.primaryColor);
+  widgetEl.style.setProperty('--qr-text-color', CONFIG.theme.textColor);
+  widgetEl.style.setProperty('--qr-border-color', CONFIG.theme.borderColor);
+  widgetEl.style.setProperty('--qr-border-radius', CONFIG.theme.borderRadius);
+
+  if (CONFIG.theme.backgroundType === 'transparent') {
+    widgetEl.style.setProperty('--qr-bg-color', 'transparent');
+  } else if (CONFIG.theme.backgroundType === 'image' && CONFIG.theme.backgroundImageUrl) {
+    widgetEl.style.setProperty('--qr-bg-color', 'transparent');
+    widgetEl.style.backgroundImage = 'url("' + CONFIG.theme.backgroundImageUrl + '")';
+  } else {
+    widgetEl.style.setProperty('--qr-bg-color', CONFIG.theme.backgroundColor);
+  }
+
+  if (CONFIG.theme.googleFont && CONFIG.theme.googleFont.url) {
+    const linkEl = document.createElement('link');
+    linkEl.rel = 'stylesheet';
+    linkEl.href = CONFIG.theme.googleFont.url;
+    document.head.appendChild(linkEl);
+    widgetEl.style.setProperty('--qr-font-family', "'" + CONFIG.theme.googleFont.name + "', sans-serif");
+  } else if (CONFIG.theme.customFontFile && CONFIG.theme.customFontFile.url) {
+    const fontName = CONFIG.theme.customFontFile.name || 'CustomBrandFont';
+    const styleEl = document.createElement('style');
+    styleEl.textContent = '@font-face { font-family: "' + fontName + '"; src: url("' + CONFIG.theme.customFontFile.url + '"); }';
+    document.head.appendChild(styleEl);
+    widgetEl.style.setProperty('--qr-font-family', "'" + fontName + "', sans-serif");
+  } else {
+    widgetEl.style.setProperty('--qr-font-family', CONFIG.theme.fontFamily);
+  }
+
+  const titleEl = document.getElementById('qr-title');
+  if (CONFIG.title) { titleEl.textContent = CONFIG.title; } else { titleEl.style.display = 'none'; }
+
+  const footerEl = document.getElementById('qr-footer');
+  if (CONFIG.footer) { footerEl.textContent = CONFIG.footer; } else { footerEl.style.display = 'none'; }
+
+  const formEl = document.getElementById('quote-request-form');
+
+  CONFIG.fields.forEach(function (field, index) {
+    const wrapper = document.createElement('label');
+    wrapper.textContent = field.label + (field.required ? ' *' : '');
+
+    let input;
+    if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+    } else if (field.type === 'select') {
+      input = document.createElement('select');
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '-- Select --';
+      input.appendChild(blank);
+      (field.options || []).forEach(function (opt) {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        input.appendChild(o);
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = field.type || 'text';
+    }
+
+    input.id = 'qr-field-' + index;
+    input.dataset.fieldLabel = field.label;
+    if (field.required) input.required = true;
+    if (field.placeholder) input.placeholder = field.placeholder;
+
+    wrapper.appendChild(input);
+    formEl.appendChild(wrapper);
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.textContent = CONFIG.submitButtonText;
+  formEl.appendChild(submitBtn);
+
+  const statusEl = document.createElement('p');
+  statusEl.id = 'qr-form-status';
+  formEl.appendChild(statusEl);
+
+  // Appends a query parameter to a URL, using "?" for the first one
+  // and "&" for subsequent ones.
+  function withParam(url, param) {
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + param;
+  }
+
+  // JSONP submit — matches the SimpleQuote backend's networking
+  // pattern (everything, including writes, goes through a <script>
+  // tag GET request), which avoids CORS entirely and lets us show a
+  // real confirmation instead of a blind fire-and-forget POST.
+  let qrCallbackCounter = 0;
+  formEl.addEventListener('submit', function (e) {
+    e.preventDefault();
+    statusEl.textContent = 'Sending...';
+
+    const fieldsData = {};
+    CONFIG.fields.forEach(function (field, index) {
+      const el = document.getElementById('qr-field-' + index);
+      fieldsData[field.label] = el.value;
+    });
+
+    const callbackName = 'qrSubmitCallback' + (qrCallbackCounter++);
+    window[callbackName] = function (result) {
+      delete window[callbackName];
+      scriptEl.remove();
+      if (result && result.success) {
+        statusEl.textContent = CONFIG.successMessage;
+        formEl.reset();
+      } else {
+        statusEl.textContent = CONFIG.errorMessage;
+      }
+    };
+
+    let url = withParam(CONFIG.scriptUrl, 'action=submit_request');
+    url = withParam(url, 'data=' + encodeURIComponent(JSON.stringify({ fields: fieldsData })));
+    url = withParam(url, 'sourcePage=' + encodeURIComponent(window.location.href));
+    url = withParam(url, 'callback=' + callbackName);
+
+    const scriptEl = document.createElement('script');
+    scriptEl.src = url;
+    scriptEl.onerror = function () {
+      delete window[callbackName];
+      statusEl.textContent = CONFIG.errorMessage;
+    };
+    document.body.appendChild(scriptEl);
+  });
+  `;
+
+  const STYLE_BLOCK = `
+<style>
+  .qr-widget {
+    --qr-primary-color: #2563eb;
+    --qr-bg-color: #ffffff;
+    --qr-text-color: #111111;
+    --qr-border-color: #d1d5db;
+    --qr-font-family: inherit;
+    --qr-border-radius: 8px;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--qr-bg-color);
+    background-size: cover;
+    background-position: center;
+    color: var(--qr-text-color);
+    font-family: var(--qr-font-family);
+    border-radius: var(--qr-border-radius);
+    box-sizing: border-box;
+  }
+  .qr-widget * { box-sizing: border-box; }
+  .qr-widget .qr-logo { display: block; margin: 0 auto 16px; }
+  .qr-widget h2 { margin: 0 0 16px 0; font-size: 20px; }
+  .qr-widget form { display: flex; flex-direction: column; gap: 16px; }
+  .qr-widget label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+  .qr-widget input, .qr-widget select, .qr-widget textarea {
+    font-family: var(--qr-font-family); font-size: 15px; font-weight: normal;
+    padding: 10px 12px; border: 1px solid var(--qr-border-color);
+    border-radius: var(--qr-border-radius); background-color: #ffffff;
+    color: var(--qr-text-color); width: 100%;
+  }
+  .qr-widget textarea { min-height: 90px; resize: vertical; }
+  .qr-widget input:focus, .qr-widget select:focus, .qr-widget textarea:focus {
+    outline: none; border-color: var(--qr-primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--qr-primary-color) 20%, transparent);
+  }
+  .qr-widget button {
+    margin-top: 4px; padding: 12px 16px; font-size: 15px; font-weight: 600;
+    font-family: var(--qr-font-family); color: #ffffff;
+    background-color: var(--qr-primary-color); border: none;
+    border-radius: var(--qr-border-radius); cursor: pointer;
+  }
+  .qr-widget button:hover { filter: brightness(0.92); }
+  .qr-widget #qr-form-status { font-size: 14px; text-align: center; min-height: 18px; }
+  .qr-widget .qr-footer { margin-top: 12px; font-size: 12px; font-weight: normal; text-align: center; opacity: 0.75; }
+</style>`;
+
+  function generateFullHTML() {
+    const configJson = JSON.stringify(state, null, 2);
+    return `<!--
+  Lead Capture Form — generated by form-builder.html
+  Re-open form-builder.html anytime to keep editing visually,
+  or hand-edit the CONFIG block below directly.
+-->
+${STYLE_BLOCK}
+
+<div class="qr-widget" id="qr-widget">
+  <h2 id="qr-title"></h2>
+  <form id="quote-request-form"></form>
+  <p class="qr-footer" id="qr-footer"></p>
+</div>
+
+<script>
+  const CONFIG = ${configJson};
+${ENGINE_SCRIPT}
+<\/script>
+`;
+  }
+
+  // Builds a one-row CSV — just the header row — with columns that
+  // exactly match your current fields, in order: Timestamp, then
+  // each field's label, then the automatic system columns. This is
+  // the file to import into Google Sheets so headers can never be
+  // mistyped or out of sync with the form.
+  function generateSheetTemplateCSV() {
+    function csvEscape(value) {
+      if (value.indexOf(',') !== -1 || value.indexOf('"') !== -1) {
+        return '"' + value.replace(/"/g, '""') + '"';
+      }
+      return value;
+    }
+    const headers = ['Request_ID', 'Timestamp']
+      .concat(state.fields.map(f => f.label))
+      .concat(['Status', 'Source Page']);
+    return headers.map(csvEscape).join(',') + '\n';
+  }
+
+  function renderPreview() {
+    const html = generateFullHTML();
+    document.getElementById('preview-frame').srcdoc = html;
+  }
+
+  // ============================================================
+  // CONTROLS UI
+  // ============================================================
+  const controlsEl = document.getElementById('controls');
+
+  function el(tag, props, children) {
+    const e = document.createElement(tag);
+    Object.assign(e, props || {});
+    (children || []).forEach(c => e.appendChild(c));
+    return e;
+  }
+
+  // Creates a small "?" button that toggles a help box open/closed.
+  // helpHtml can include basic tags like <ol><li><strong> for steps.
+  function helpButton(helpHtml) {
+    const btn = el('button', { type: 'button', className: 'help-btn' });
+    btn.textContent = '?';
+    const box = el('div', { className: 'help-box' });
+    box.innerHTML = helpHtml;
+    btn.addEventListener('click', () => {
+      box.classList.toggle('open');
+    });
+    return { btn, box };
+  }
+
+  function textControl(labelText, hint, value, onChange, type, helpHtml) {
+    const wrapper = el('label', { className: 'control' });
+    const labelRow = el('div', { className: 'label-row' });
+    labelRow.appendChild(document.createTextNode(labelText));
+    if (helpHtml) {
+      const { btn, box } = helpButton(helpHtml);
+      labelRow.appendChild(btn);
+      wrapper.appendChild(labelRow);
+      if (hint) {
+        const hintEl = el('span', { className: 'hint' });
+        hintEl.textContent = hint;
+        wrapper.appendChild(hintEl);
+      }
+      wrapper.appendChild(box);
+    } else {
+      wrapper.appendChild(labelRow);
+      if (hint) {
+        const hintEl = el('span', { className: 'hint' });
+        hintEl.textContent = hint;
+        wrapper.appendChild(hintEl);
+      }
+    }
+    const input = el(type === 'textarea' ? 'textarea' : 'input', {
+      type: type || 'text',
+      value: value
+    });
+    if (type === 'textarea') input.value = value;
+    input.addEventListener('input', () => { onChange(input.value); renderPreview(); });
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  function colorControl(labelText, value, onChange) {
+    const wrapper = el('label', { className: 'control' });
+    wrapper.appendChild(document.createTextNode(labelText));
+    const row = el('div', { className: 'color-row' });
+    const colorInput = el('input', { type: 'color', value: value });
+    const textInput = el('input', { type: 'text', value: value });
+    colorInput.addEventListener('input', () => { textInput.value = colorInput.value; onChange(colorInput.value); renderPreview(); });
+    textInput.addEventListener('input', () => { onChange(textInput.value); renderPreview(); });
+    row.appendChild(colorInput);
+    row.appendChild(textInput);
+    wrapper.appendChild(row);
+    return wrapper;
+  }
+
+  // Reads an uploaded image file and hands back a data: URL via callback
+  function fileToDataUrl(file, callback) {
+    const reader = new FileReader();
+    reader.onload = () => callback(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  function buildOptionsEditor(field, container) {
+    container.innerHTML = '';
+    const hint = el('span', { className: 'hint' });
+    hint.textContent = 'These are the choices people can pick from in the dropdown.';
+    container.appendChild(hint);
+
+    (field.options || []).forEach((opt, i) => {
+      const row = el('div', { className: 'option-row' });
+      const input = el('input', { type: 'text', value: opt });
+      input.addEventListener('input', () => { field.options[i] = input.value; renderPreview(); });
+      const removeBtn = el('button', { className: 'small danger', type: 'button' });
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => {
+        field.options.splice(i, 1);
+        buildOptionsEditor(field, container);
+        renderPreview();
+      });
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+    });
+
+    const addBtn = el('button', { className: 'small', type: 'button' });
+    addBtn.textContent = '+ Add Choice';
+    addBtn.addEventListener('click', () => {
+      if (!field.options) field.options = [];
+      field.options.push('New Choice');
+      buildOptionsEditor(field, container);
+      renderPreview();
+    });
+    container.appendChild(addBtn);
+  }
+
+  function buildFieldCard(field, index) {
+    const card = el('div', { className: 'field-card' });
+
+    const top = el('div', { className: 'field-card-top' });
+    const strong = el('strong'); strong.textContent = 'Field ' + (index + 1) + ': ' + field.label;
+    top.appendChild(strong);
+    const removeBtn = el('button', { className: 'danger', type: 'button' });
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      state.fields.splice(index, 1);
+      renderControls();
+      renderPreview();
+    });
+    top.appendChild(removeBtn);
+    card.appendChild(top);
+
+    const labelWrap = el('label', { className: 'control' });
+    labelWrap.appendChild(document.createTextNode('Question / Label'));
+    const labelHint = el('span', { className: 'hint' });
+    labelHint.textContent = 'What the visitor sees. Must also exist as a column header in your Google Sheet.';
+    labelWrap.appendChild(labelHint);
+    const labelInput = el('input', { type: 'text', value: field.label });
+    labelInput.addEventListener('input', () => { field.label = labelInput.value; strong.textContent = 'Field ' + (index + 1) + ': ' + field.label; renderPreview(); });
+    labelWrap.appendChild(labelInput);
+    card.appendChild(labelWrap);
+
+    const row = el('div', { className: 'field-row' });
+
+    const typeWrap = el('div');
+    const typeLabel = el('label', { className: 'control' });
+    typeLabel.appendChild(document.createTextNode('Answer Type'));
+    const typeSelect = el('select');
+    [
+      ['text', 'Short answer'],
+      ['email', 'Email address'],
+      ['tel', 'Phone number'],
+      ['textarea', 'Long answer'],
+      ['select', 'Dropdown choices']
+    ].forEach(([val, text]) => {
+      const opt = el('option', { value: val }); opt.textContent = text;
+      if (val === field.type) opt.selected = true;
+      typeSelect.appendChild(opt);
+    });
+    typeSelect.addEventListener('change', () => {
+      field.type = typeSelect.value;
+      if (field.type === 'select' && !field.options) field.options = ['Option 1', 'Option 2'];
+      renderControls();
+      renderPreview();
+    });
+    typeLabel.appendChild(typeSelect);
+    typeWrap.appendChild(typeLabel);
+    row.appendChild(typeWrap);
+
+    const reqWrap = el('div');
+    const reqTopLabel = el('label', { className: 'control' });
+    reqTopLabel.appendChild(document.createTextNode('Required?'));
+    const reqCheckboxRow = el('label', { className: 'checkbox-row' });
+    const reqCheckbox = el('input', { type: 'checkbox', checked: !!field.required });
+    reqCheckbox.addEventListener('change', () => { field.required = reqCheckbox.checked; renderPreview(); });
+    reqCheckboxRow.appendChild(reqCheckbox);
+    reqCheckboxRow.appendChild(document.createTextNode(' Must be filled in to submit'));
+    reqTopLabel.appendChild(reqCheckboxRow);
+    reqWrap.appendChild(reqTopLabel);
+    row.appendChild(reqWrap);
+
+    card.appendChild(row);
+
+    if (field.type === 'text' || field.type === 'email' || field.type === 'tel') {
+      const phWrap = el('label', { className: 'control' });
+      phWrap.appendChild(document.createTextNode('Placeholder hint text (optional)'));
+      const phInput = el('input', { type: 'text', value: field.placeholder || '' });
+      phInput.addEventListener('input', () => { field.placeholder = phInput.value; renderPreview(); });
+      phWrap.appendChild(phInput);
+      card.appendChild(phWrap);
+    }
+
+    if (field.type === 'select') {
+      const optWrap = el('label', { className: 'control' });
+      optWrap.appendChild(document.createTextNode('Dropdown Choices'));
+      const optContainer = el('div');
+      buildOptionsEditor(field, optContainer);
+      optWrap.appendChild(optContainer);
+      card.appendChild(optWrap);
+    }
+
+    return card;
+  }
+
+  function renderControls() {
+    controlsEl.innerHTML = '';
+
+    // --- Basics ---
+    const basics = el('section');
+    const basicsH3 = el('h3'); basicsH3.textContent = 'Basics'; basics.appendChild(basicsH3);
+    basics.appendChild(textControl(
+      'Apps Script Web App URL',
+      'The SAME /exec URL as your main SimpleQuote app — not a new one',
+      state.scriptUrl,
+      v => state.scriptUrl = v,
+      'text',
+      `<strong>What is this?</strong> This intake form uses the exact same backend as your Quotes/Invoices dashboard — one Sheet, one Apps Script, one URL for everything. If you've already set up SimpleQuote (see the main README.md), paste that same URL here.
+      <ol>
+        <li>If you haven't set up SimpleQuote yet, do that first — see the main project's README.md.</li>
+        <li>Once deployed, you'll have a Web App URL ending in <strong>/exec</strong>. Paste it here.</li>
+        <li>Add a new tab to your existing Google Sheet named <strong>Quote_Requests</strong>. Finish setting up your fields further down this page first, then click <strong>Download Quote_Requests Sheet Tab Template (CSV)</strong> and import it into that new tab (File &gt; Import &gt; Upload &gt; Replace current sheet).</li>
+        <li>That's it — no separate Apps Script deployment needed. Submissions from this form will show up in the "Requests" tab of your SimpleQuote dashboard.</li>
+      </ol>`
+    ));
+
+    const testUrlRow = el('div', { style: 'margin-top: -6px; margin-bottom: 12px;' });
+    const testUrlBtn = el('button', { type: 'button', className: 'small' });
+    testUrlBtn.textContent = 'Test URL (opens in a new tab)';
+    const testUrlStatus = el('span', { style: 'font-size: 12px; margin-left: 8px; color: #6b7280;' });
+    testUrlBtn.addEventListener('click', () => {
+      if (!state.scriptUrl || state.scriptUrl === 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+        testUrlStatus.textContent = 'Paste a URL first.';
+        testUrlStatus.style.color = '#b91c1c';
+        return;
+      }
+      window.open(state.scriptUrl, '_blank');
+      testUrlStatus.textContent = 'Opened — check the new tab. You should see: {"status":"Lead capture endpoint is live"}';
+      testUrlStatus.style.color = '#059669';
+    });
+    testUrlRow.appendChild(testUrlBtn);
+    testUrlRow.appendChild(testUrlStatus);
+    basics.appendChild(testUrlRow);
+    basics.appendChild(textControl('Form Title', 'Shown above the form. Leave blank to hide.', state.title, v => state.title = v));
+    basics.appendChild(textControl('Footer Text', 'Shown below the button. Leave blank to hide.', state.footer, v => state.footer = v));
+    basics.appendChild(textControl('Submit Button Text', '', state.submitButtonText, v => state.submitButtonText = v));
+    basics.appendChild(textControl('Success Message', 'Shown after a successful submission', state.successMessage, v => state.successMessage = v));
+    basics.appendChild(textControl('Error Message', 'Shown if submission fails', state.errorMessage, v => state.errorMessage = v));
+    controlsEl.appendChild(basics);
+
+    // --- Logo ---
+    const logoSection = el('section');
+    const logoH3 = el('h3'); logoH3.textContent = 'Logo'; logoSection.appendChild(logoH3);
+    const logoHint = el('div', { className: 'section-hint' });
+    logoHint.textContent = 'Upload an image (PNG or JPG with a transparent/white background works best). It appears centered above the title.';
+    logoSection.appendChild(logoHint);
+
+    const logoFileInput = el('input', { type: 'file', accept: 'image/*' });
+    logoFileInput.addEventListener('change', () => {
+      const file = logoFileInput.files[0];
+      if (!file) return;
+      fileToDataUrl(file, (dataUrl) => {
+        state.logo.url = dataUrl;
+        renderControls();
+        renderPreview();
+      });
+    });
+    logoSection.appendChild(logoFileInput);
+
+    if (state.logo.url) {
+      const logoPreview = el('img', { className: 'logo-preview', src: state.logo.url });
+      logoSection.appendChild(logoPreview);
+      const removeLogoBtn = el('button', { className: 'small danger', type: 'button' });
+      removeLogoBtn.style.marginTop = '8px';
+      removeLogoBtn.textContent = 'Remove Logo';
+      removeLogoBtn.addEventListener('click', () => { state.logo.url = ''; renderControls(); renderPreview(); });
+      logoSection.appendChild(removeLogoBtn);
+    }
+    controlsEl.appendChild(logoSection);
+
+    // --- Appearance ---
+    const appearance = el('section');
+    const appH3 = el('h3'); appH3.textContent = 'Appearance'; appearance.appendChild(appH3);
+    appearance.appendChild(colorControl('Primary Color (buttons, focus)', state.theme.primaryColor, v => state.theme.primaryColor = v));
+    appearance.appendChild(colorControl('Text Color', state.theme.textColor, v => state.theme.textColor = v));
+    appearance.appendChild(colorControl('Border Color', state.theme.borderColor, v => state.theme.borderColor = v));
+    appearance.appendChild(textControl('Corner Rounding (CSS value)', 'e.g. 8px, 0px for square corners', state.theme.borderRadius, v => state.theme.borderRadius = v));
+
+    // Background mode
+    const bgLabel = el('label', { className: 'control' });
+    bgLabel.appendChild(document.createTextNode('Background'));
+    const bgGroup = el('div', { className: 'radio-group' });
+    [
+      ['solid', 'Solid color'],
+      ['transparent', 'No background (blends into the website behind it)'],
+      ['image', 'Upload a background image']
+    ].forEach(([val, text]) => {
+      const wrap = el('label');
+      const radio = el('input', { type: 'radio', name: 'bgmode', checked: state.theme.backgroundType === val });
+      radio.addEventListener('change', () => { state.theme.backgroundType = val; renderControls(); renderPreview(); });
+      wrap.appendChild(radio);
+      wrap.appendChild(document.createTextNode(' ' + text));
+      bgGroup.appendChild(wrap);
+    });
+    bgLabel.appendChild(bgGroup);
+    appearance.appendChild(bgLabel);
+
+    if (state.theme.backgroundType === 'solid') {
+      const box = el('div', { className: 'bg-extra' });
+      box.appendChild(colorControl('Background Color', state.theme.backgroundColor, v => state.theme.backgroundColor = v));
+      appearance.appendChild(box);
+    } else if (state.theme.backgroundType === 'image') {
+      const box = el('div', { className: 'bg-extra' });
+      const bgFileInput = el('input', { type: 'file', accept: 'image/*' });
+      bgFileInput.addEventListener('change', () => {
+        const file = bgFileInput.files[0];
+        if (!file) return;
+        fileToDataUrl(file, (dataUrl) => {
+          state.theme.backgroundImageUrl = dataUrl;
+          renderControls();
+          renderPreview();
+        });
+      });
+      box.appendChild(bgFileInput);
+      if (state.theme.backgroundImageUrl) {
+        box.appendChild(el('img', { className: 'bg-preview', src: state.theme.backgroundImageUrl }));
+      }
+      appearance.appendChild(box);
+    }
+
+    // Font mode
+    const fontLabel = el('label', { className: 'control' });
+    fontLabel.appendChild(document.createTextNode('Font'));
+    const fontGroup = el('div', { className: 'radio-group' });
+    [['google', 'Google Font (recommended)'], ['custom', 'Custom Font File'], ['plain', 'Simple / System Font']].forEach(([val, text]) => {
+      const wrap = el('label');
+      const radio = el('input', { type: 'radio', name: 'fontmode', checked: fontMode === val });
+      radio.addEventListener('change', () => { fontMode = val; applyFontMode(); renderControls(); renderPreview(); });
+      wrap.appendChild(radio);
+      wrap.appendChild(document.createTextNode(' ' + text));
+      fontGroup.appendChild(wrap);
+    });
+    fontLabel.appendChild(fontGroup);
+    appearance.appendChild(fontLabel);
+
+    if (fontMode === 'google') {
+      const box = el('div', { className: 'font-extra' });
+      box.appendChild(textControl('Google Font Name', 'e.g. Inter, Poppins, Roboto', state.theme.googleFont.name, v => state.theme.googleFont.name = v));
+      box.appendChild(textControl('Google Font Stylesheet URL', 'Copy from fonts.google.com', state.theme.googleFont.url, v => state.theme.googleFont.url = v));
+      appearance.appendChild(box);
+    } else if (fontMode === 'custom') {
+      const box = el('div', { className: 'font-extra' });
+      box.appendChild(textControl('Font Name (any name you choose)', '', state.theme.customFontFile.name, v => state.theme.customFontFile.name = v));
+      box.appendChild(textControl('Font File URL', 'Must be hosted somewhere with a public link (.woff2/.woff/.ttf)', state.theme.customFontFile.url, v => state.theme.customFontFile.url = v));
+      appearance.appendChild(box);
+    } else {
+      const box = el('div', { className: 'font-extra' });
+      box.appendChild(textControl('CSS Font Family', '"inherit" matches the host site, or type a font stack like "Georgia, serif"', state.theme.fontFamily, v => state.theme.fontFamily = v));
+      appearance.appendChild(box);
+    }
+
+    controlsEl.appendChild(appearance);
+
+    // --- Fields ---
+    const fieldsSection = el('section');
+    const fieldsH3 = el('h3'); fieldsH3.textContent = 'Form Fields'; fieldsSection.appendChild(fieldsH3);
+    const fieldsHint = el('div', { className: 'section-hint' });
+    fieldsHint.textContent = 'Each field below becomes one question on the form. Click "+ Add Field" to add a new one.';
+    fieldsSection.appendChild(fieldsHint);
+    state.fields.forEach((field, index) => {
+      fieldsSection.appendChild(buildFieldCard(field, index));
+    });
+    const addBtn = el('button', { className: 'add-field-btn', type: 'button' });
+    addBtn.textContent = '+ Add Field';
+    addBtn.addEventListener('click', () => {
+      state.fields.push({ label: 'New Field', type: 'text', required: false, placeholder: '' });
+      renderControls();
+      renderPreview();
+    });
+    fieldsSection.appendChild(addBtn);
+    controlsEl.appendChild(fieldsSection);
+  }
+
+  function applyFontMode() {
+    if (fontMode === 'google') {
+      state.theme.customFontFile = { name: '', url: '' };
+    } else if (fontMode === 'custom') {
+      state.theme.googleFont = { name: '', url: '' };
+    } else {
+      state.theme.googleFont = { name: '', url: '' };
+      state.theme.customFontFile = { name: '', url: '' };
+    }
+  }
+
+  // ============================================================
+  // ACTIONS — download / copy
+  // ============================================================
+  document.getElementById('download-btn').addEventListener('click', () => {
+    const html = generateFullHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'request-form.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('download-csv-btn').addEventListener('click', () => {
+    const csv = generateSheetTemplateCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quote-requests-template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    const html = generateFullHTML();
+    navigator.clipboard.writeText(html).then(() => {
+      const status = document.getElementById('copy-status');
+      status.textContent = 'Copied!';
+      setTimeout(() => status.textContent = '', 2000);
+    });
+  });
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  renderControls();
+  renderPreview();
+</script>
+
+</body>
+</html>

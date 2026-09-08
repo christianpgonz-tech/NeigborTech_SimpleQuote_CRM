@@ -1,0 +1,1 @@
+Invoice_ID,Customer_ID,Invoice_Number,Customer_Name,Customer_Email,Customer_Phone,Source_Quote_ID,Created_Date,Due_Date,Status,Subtotal,Discount,Tax,Total,Amount_Paid,Balance_Due,Payment_Date,Payment_Method,Notes,Payment_Instructions,Created_At,Updated_At

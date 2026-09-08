@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Booking Form Builder</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+  }
+  header {
+    background: #111827;
+    color: white;
+    padding: 16px 24px;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #9ca3af; }
+  .intro {
+    margin: 16px 24px 0;
+    padding: 14px 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1e3a8a;
+    line-height: 1.5;
+  }
+  .layout {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    align-items: flex-start;
+  }
+  .panel {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .controls {
+    flex: 1;
+    min-width: 420px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .preview-col {
+    flex: 1;
+    position: sticky;
+    top: 20px;
+  }
+  .preview-col h2 { margin-top: 0; font-size: 15px; color: #374151; }
+  iframe {
+    width: 100%;
+    height: 640px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background:
+      repeating-conic-gradient(#f0f0f0 0% 25%, #ffffff 0% 50%) 50% / 16px 16px;
+  }
+  section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  section:last-of-type { border-bottom: none; }
+  section h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin: 0 0 12px;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: -6px 0 12px;
+    line-height: 1.4;
+  }
+  label.control {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  label.control span.hint {
+    display: block;
+    font-weight: normal;
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  input[type="text"], input[type="url"], input[type="number"], input[type="time"], textarea, select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input[type="color"] {
+    width: 48px;
+    height: 32px;
+    margin-top: 6px;
+    padding: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  input[type="file"] {
+    width: 100%;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-row input[type="text"] { flex: 1; margin-top: 0; }
+  .service-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: #fafafa;
+  }
+  .service-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .service-card-top strong { font-size: 14px; }
+  .service-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .service-row > div { flex: 1; }
+  .checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: normal; }
+  .radio-group { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: normal; margin-bottom: 10px; }
+  .radio-group label { display: flex; align-items: center; gap: 6px; font-weight: normal; }
+  .day-grid { display: flex; flex-direction: column; gap: 8px; }
+  .day-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .day-row .day-toggle { display: flex; align-items: center; gap: 6px; width: 110px; flex-shrink: 0; }
+  .day-row .day-times { display: flex; gap: 8px; align-items: center; flex: 1; }
+  .day-row .day-times input { margin-top: 0; }
+  .day-row.disabled { opacity: 0.4; }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+  }
+  button:hover { background: #f3f4f6; }
+  button.primary {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+  }
+  button.primary:hover { filter: brightness(0.95); }
+  button.danger { color: #b91c1c; border-color: #fecaca; }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  #preview-step-tabs button.active { background: #2563eb; color: white; border-color: #2563eb; }
+  .add-btn { width: 100%; margin-top: 4px; }
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .actions button { flex: 1; }
+  #copy-status { font-size: 12px; color: #059669; margin-left: 8px; }
+  .font-extra, .bg-extra, .logo-extra { margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; }
+  .option-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .option-row input { margin-top: 0; flex: 1; }
+  .logo-preview { max-height: 60px; margin-top: 8px; display: block; }
+  .bg-preview { max-height: 60px; margin-top: 8px; display: block; border-radius: 6px; }
+  .label-row { display: flex; align-items: center; gap: 6px; }
+  .help-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #e5e7eb; color: #374151; font-size: 11px; font-weight: 700;
+    border: none; cursor: pointer; padding: 0; line-height: 1;
+  }
+  .help-btn:hover { background: #d1d5db; }
+  .help-box {
+    display: none; margin-top: 8px; padding: 12px;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px;
+    font-size: 12.5px; font-weight: normal; color: #78350f; line-height: 1.5;
+  }
+  .help-box.open { display: block; }
+  .help-box ol { margin: 6px 0 0; padding-left: 18px; }
+  .help-box li { margin-bottom: 4px; }
+  .preview-note {
+    font-size: 11px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a;
+    padding: 8px 10px; border-radius: 6px; margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Booking Form Builder</h1>
+  <p>Edit on the left, see it update live on the right. When you're happy, download the finished files.</p>
+</header>
+
+<div class="intro">
+  <strong>How this works:</strong> everything you change here updates the preview on the right instantly.
+  Nothing is saved anywhere until you click a download button — those give you the files you need:
+  <strong>booking-form.html</strong> (the form itself), <strong>bookings-template.csv</strong> (matching Google Sheet
+  columns), and <strong>Code.gs</strong> (the backend script, with your services and availability baked in). You can reopen
+  this builder anytime to make more changes.
+  <div class="preview-note" style="margin-top:10px;">Note: the live preview on the right simulates availability
+  locally (no real calendar checked) so you can see the flow. The downloaded form checks your REAL Google Calendar.</div>
+</div>
+
+<div class="layout">
+  <div class="panel controls" id="controls"></div>
+
+  <div class="panel preview-col">
+    <h2>Live Preview</h2>
+    <div class="actions" id="preview-step-tabs" style="margin-bottom:10px;">
+      <button class="small" data-step="1">1. Your Info</button>
+      <button class="small" data-step="2">2. Choose Service</button>
+      <button class="small" data-step="3">3. Pick a Time</button>
+      <button class="small" data-step="4">4. Final Details</button>
+    </div>
+    <iframe id="preview-frame"></iframe>
+
+    <div class="section-hint" style="margin-top:14px;">Goes on your WEBSITE:</div>
+    <div class="actions">
+      <button class="primary" id="download-btn">Download booking-form.html</button>
+      <button id="copy-btn">Copy booking-form.html Code</button>
+    </div>
+
+    <div class="section-hint" style="margin-top:10px;">Goes in GOOGLE SHEETS / APPS SCRIPT (not your website):</div>
+    <div class="actions">
+      <button id="download-csv-btn">Download Google Sheet Template (CSV)</button>
+      <button id="download-gs-btn">Download Code.gs (Apps Script)</button>
+    </div>
+    <span id="copy-status"></span>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  let state = {
+    scriptUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+    calendarId: "default",
+    bookingWindowDays: 14,
+    logo: { url: "", maxHeight: "40px" },
+    title: "Request an Appointment",
+    footer: "Your appointment is confirmed instantly once you pick a time.",
+    successMessage: "You're booked! We've added this to our calendar and will see you then.",
+    errorMessage: "Something went wrong. Please try again or contact us directly.",
+    extraFields: [],
+    services: [
+      {
+        name: "House Cleaning",
+        durationMinutes: 120,
+        requiresAddress: true,
+        availability: [
+          { day: 1, start: "09:00", end: "15:00" },
+          { day: 2, start: "09:00", end: "15:00" },
+          { day: 3, start: "09:00", end: "15:00" },
+          { day: 4, start: "09:00", end: "15:00" },
+          { day: 5, start: "09:00", end: "15:00" }
+        ]
+      },
+      {
+        name: "Handyman Repair",
+        durationMinutes: 90,
+        requiresAddress: true,
+        availability: [
+          { day: 1, start: "08:00", end: "17:00" },
+          { day: 2, start: "08:00", end: "17:00" },
+          { day: 3, start: "08:00", end: "17:00" },
+          { day: 4, start: "08:00", end: "17:00" },
+          { day: 5, start: "08:00", end: "17:00" }
+        ]
+      },
+      {
+        name: "Tutoring Session",
+        durationMinutes: 60,
+        requiresAddress: false,
+        availability: [
+          { day: 1, start: "15:00", end: "19:00" },
+          { day: 3, start: "15:00", end: "19:00" },
+          { day: 6, start: "10:00", end: "14:00" }
+        ]
+      }
+    ],
+    theme: {
+      primaryColor: "#2563eb",
+      textColor: "#111111",
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+      backgroundType: "solid",
+      backgroundColor: "#ffffff",
+      backgroundImageUrl: "",
+      fontFamily: "inherit",
+      googleFont: { name: "Inter", url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" },
+      customFontFile: { name: "", url: "" }
+    }
+  };
+
+  let fontMode = "google";
+  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // ============================================================
+  // TEMPLATES — kept as strings so the generated output file is
+  // self-contained and matches the real booking-form.html exactly.
+  // ============================================================
+  const STYLE_BLOCK = `<style>
+  .booking-widget {
+    --bk-primary-color: #2563eb;
+    --bk-bg-color: #ffffff;
+    --bk-text-color: #111111;
+    --bk-border-color: #d1d5db;
+    --bk-font-family: inherit;
+    --bk-border-radius: 8px;
+
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bk-bg-color);
+    background-size: cover;
+    background-position: center;
+    color: var(--bk-text-color);
+    font-family: var(--bk-font-family);
+    border-radius: var(--bk-border-radius);
+    box-sizing: border-box;
+  }
+  .booking-widget * { box-sizing: border-box; }
+  .booking-widget .bk-logo { display: block; margin: 0 auto 16px; }
+  .booking-widget h2 { margin: 0 0 4px 0; font-size: 20px; }
+  .booking-widget .bk-step-label { font-size: 12px; color: var(--bk-text-color); opacity: 0.6; margin-bottom: 16px; }
+  .booking-widget label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+  .booking-widget input, .booking-widget select, .booking-widget textarea {
+    font-family: var(--bk-font-family); font-size: 15px; font-weight: normal;
+    padding: 10px 12px; border: 1px solid var(--bk-border-color);
+    border-radius: var(--bk-border-radius); background-color: #ffffff;
+    color: #111111; width: 100%;
+  }
+  .booking-widget textarea { min-height: 80px; resize: vertical; }
+  .booking-widget input:focus, .booking-widget select:focus, .booking-widget textarea:focus {
+    outline: none; border-color: var(--bk-primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bk-primary-color) 20%, transparent);
+  }
+  .booking-widget button {
+    padding: 12px 16px; font-size: 15px; font-weight: 600;
+    font-family: var(--bk-font-family); color: #ffffff;
+    background-color: var(--bk-primary-color); border: none;
+    border-radius: var(--bk-border-radius); cursor: pointer;
+  }
+  .booking-widget button:hover { filter: brightness(0.92); }
+  .booking-widget button.bk-secondary {
+    background: transparent; color: var(--bk-text-color);
+    border: 1px solid var(--bk-border-color);
+  }
+  .booking-widget button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .booking-widget .bk-nav-row { display: flex; gap: 10px; margin-top: 8px; }
+  .booking-widget .bk-nav-row button { flex: 1; }
+  .booking-widget .bk-service-card {
+    display: block; width: 100%; text-align: left;
+    padding: 14px; margin-bottom: 10px;
+    border: 1px solid var(--bk-border-color); border-radius: var(--bk-border-radius);
+    background: #fff; color: #111111; cursor: pointer; font-family: var(--bk-font-family);
+  }
+  .booking-widget .bk-service-card:hover { border-color: var(--bk-primary-color); }
+  .booking-widget .bk-service-card.selected { border-color: var(--bk-primary-color); border-width: 2px; background: color-mix(in srgb, var(--bk-primary-color) 6%, white); }
+  .booking-widget .bk-service-name { font-weight: 700; font-size: 15px; }
+  .booking-widget .bk-service-meta { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+  .booking-widget .bk-day-group { margin-bottom: 14px; }
+  .booking-widget .bk-day-label { font-size: 12px; font-weight: 700; opacity: 0.6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .booking-widget .bk-slot-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .booking-widget .bk-slot-btn {
+    padding: 8px 12px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--bk-border-color); border-radius: 6px;
+    background: #fff; color: #111111; cursor: pointer;
+  }
+  .booking-widget .bk-slot-btn:hover { border-color: var(--bk-primary-color); }
+  .booking-widget .bk-slot-btn.selected { background: var(--bk-primary-color); color: #fff; border-color: var(--bk-primary-color); }
+  .booking-widget .bk-slots-wrap { max-height: 320px; overflow-y: auto; margin-bottom: 14px; }
+  .booking-widget .bk-empty-note { font-size: 13px; opacity: 0.7; text-align: center; padding: 20px 0; }
+  .booking-widget .bk-summary { font-size: 13px; color: #111111; background: color-mix(in srgb, var(--bk-primary-color) 8%, white); padding: 10px 12px; border-radius: var(--bk-border-radius); margin-bottom: 14px; }
+  .booking-widget .bk-status { font-size: 14px; text-align: center; min-height: 18px; }
+  .booking-widget .bk-footer { margin-top: 12px; font-size: 12px; font-weight: normal; text-align: center; opacity: 0.75; }
+</style>`;
+
+  const MARKUP_BLOCK = `<div class="booking-widget" id="booking-widget">
+  <img id="bk-logo" src="" alt="" style="display:none;" class="bk-logo">
+  <h2 id="bk-title"></h2>
+  <div class="bk-step-label" id="bk-step-label"></div>
+  <div id="bk-step-content"></div>
+  <p class="bk-footer" id="bk-footer"></p>
+</div>`;
+
+  // Production engine: real JSONP calls to the real Apps Script backend.
+  const ENGINE_SCRIPT = `  const widgetEl = document.getElementById('booking-widget');
+
+  if (CONFIG.logo && CONFIG.logo.url) {
+    const logoEl = document.getElementById('bk-logo');
+    logoEl.src = CONFIG.logo.url;
+    logoEl.style.maxHeight = CONFIG.logo.maxHeight || '40px';
+    logoEl.style.display = '';
+  }
+
+  widgetEl.style.setProperty('--bk-primary-color', CONFIG.theme.primaryColor);
+  widgetEl.style.setProperty('--bk-text-color', CONFIG.theme.textColor);
+  widgetEl.style.setProperty('--bk-border-color', CONFIG.theme.borderColor);
+  widgetEl.style.setProperty('--bk-border-radius', CONFIG.theme.borderRadius);
+
+  if (CONFIG.theme.backgroundType === 'transparent') {
+    widgetEl.style.setProperty('--bk-bg-color', 'transparent');
+  } else if (CONFIG.theme.backgroundType === 'image' && CONFIG.theme.backgroundImageUrl) {
+    widgetEl.style.setProperty('--bk-bg-color', 'transparent');
+    widgetEl.style.backgroundImage = 'url("' + CONFIG.theme.backgroundImageUrl + '")';
+  } else {
+    widgetEl.style.setProperty('--bk-bg-color', CONFIG.theme.backgroundColor);
+  }
+
+  if (CONFIG.theme.googleFont && CONFIG.theme.googleFont.url) {
+    const linkEl = document.createElement('link');
+    linkEl.rel = 'stylesheet';
+    linkEl.href = CONFIG.theme.googleFont.url;
+    document.head.appendChild(linkEl);
+    widgetEl.style.setProperty('--bk-font-family', "'" + CONFIG.theme.googleFont.name + "', sans-serif");
+  } else if (CONFIG.theme.customFontFile && CONFIG.theme.customFontFile.url) {
+    const fontName = CONFIG.theme.customFontFile.name || 'CustomBrandFont';
+    const styleEl = document.createElement('style');
+    styleEl.textContent = '@font-face { font-family: "' + fontName + '"; src: url("' + CONFIG.theme.customFontFile.url + '"); }';
+    document.head.appendChild(styleEl);
+    widgetEl.style.setProperty('--bk-font-family', "'" + fontName + "', sans-serif");
+  } else {
+    widgetEl.style.setProperty('--bk-font-family', CONFIG.theme.fontFamily);
+  }
+
+  const titleEl = document.getElementById('bk-title');
+  if (CONFIG.title) { titleEl.textContent = CONFIG.title; } else { titleEl.style.display = 'none'; }
+
+  const footerEl = document.getElementById('bk-footer');
+  if (CONFIG.footer) { footerEl.textContent = CONFIG.footer; } else { footerEl.style.display = 'none'; }
+
+  // ─────────────────────────────────────────────────────────
+  // Wizard state
+  // ─────────────────────────────────────────────────────────
+  const state = {
+    step: 1,
+    name: '', phone: '', email: '',
+    services: [],       // fetched from the backend
+    selectedService: null,
+    slots: [],          // fetched from the backend for selectedService
+    selectedSlot: null,
+    address: '', notes: '',
+    extraValues: {}
+  };
+
+  const stepLabelEl = document.getElementById('bk-step-label');
+  const contentEl = document.getElementById('bk-step-content');
+
+  function setStepLabel(text) { stepLabelEl.textContent = text; }
+
+  // Appends a query parameter to a URL, using "?" if this is the
+  // first parameter or "&" if the URL already has one.
+  function withParam(url, param) {
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + param;
+  }
+
+  // JSONP helper — avoids CORS entirely, since <script> tags aren't
+  // subject to the CORS restrictions fetch()/XHR are.
+  let jsonpCounter = 0;
+  function jsonp(url, onData) {
+    const callbackName = 'bkCallback' + (jsonpCounter++);
+    window[callbackName] = function (data) {
+      delete window[callbackName];
+      script.remove();
+      onData(data);
+    };
+    const script = document.createElement('script');
+    script.src = withParam(url, 'callback=' + callbackName);
+    script.onerror = function () {
+      delete window[callbackName];
+      onData({ error: 'Could not reach the booking server.' });
+    };
+    document.body.appendChild(script);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 1 — contact info
+  // ─────────────────────────────────────────────────────────
+  function renderStep1() {
+    setStepLabel('Step 1 of 4 - Your Info');
+    contentEl.innerHTML = '';
+
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Name *';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.value = state.name;
+    nameInput.addEventListener('input', () => state.name = nameInput.value);
+    nameLabel.appendChild(nameInput);
+
+    const phoneLabel = document.createElement('label');
+    phoneLabel.textContent = 'Phone *';
+    const phoneInput = document.createElement('input');
+    phoneInput.type = 'tel'; phoneInput.value = state.phone;
+    phoneInput.addEventListener('input', () => state.phone = phoneInput.value);
+    phoneLabel.appendChild(phoneInput);
+
+    const emailLabel = document.createElement('label');
+    emailLabel.textContent = 'Email';
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email'; emailInput.value = state.email;
+    emailInput.addEventListener('input', () => state.email = emailInput.value);
+    emailLabel.appendChild(emailInput);
+
+    contentEl.appendChild(nameLabel);
+    contentEl.appendChild(phoneLabel);
+    contentEl.appendChild(emailLabel);
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.addEventListener('click', () => {
+      if (!state.name || !state.phone) {
+        showStatus('Please fill in your name and phone number.', true);
+        return;
+      }
+      clearStatus();
+      state.step = 2;
+      renderStep2();
+    });
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 2 — choose service
+  // ─────────────────────────────────────────────────────────
+  function renderStep2() {
+    setStepLabel('Step 2 of 4 - Choose a Service');
+    contentEl.innerHTML = '<p class="bk-empty-note">Loading services...</p>';
+
+    if (state.services.length > 0) {
+      renderStep2Content();
+      return;
+    }
+
+    jsonp(withParam(CONFIG.scriptUrl, 'action=services'), function (data) {
+      if (data.error) {
+        contentEl.innerHTML = '';
+        showStatus('Could not load services: ' + data.error, true);
+        return;
+      }
+      state.services = data.services || [];
+      renderStep2Content();
+    });
+  }
+
+  function renderStep2Content() {
+    contentEl.innerHTML = '';
+
+    state.services.forEach(function (service) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'bk-service-card' + (state.selectedService && state.selectedService.name === service.name ? ' selected' : '');
+      card.innerHTML = '<div class="bk-service-name"></div><div class="bk-service-meta"></div>';
+      card.querySelector('.bk-service-name').textContent = service.name;
+      card.querySelector('.bk-service-meta').textContent = service.durationMinutes + ' minutes';
+      card.addEventListener('click', () => {
+        state.selectedService = service;
+        state.selectedSlot = null;
+        state.slots = [];
+        renderStep2Content();
+      });
+      contentEl.appendChild(card);
+    });
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 1; renderStep1(); });
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = !state.selectedService;
+    nextBtn.addEventListener('click', () => {
+      if (!state.selectedService) return;
+      clearStatus();
+      state.step = 3;
+      renderStep3();
+    });
+    navRow.appendChild(backBtn);
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 3 — pick an available time slot (real calendar availability)
+  // ─────────────────────────────────────────────────────────
+  function renderStep3() {
+    setStepLabel('Step 3 of 4 - Pick a Time');
+    contentEl.innerHTML = '<p class="bk-empty-note">Checking availability...</p>';
+
+    if (state.slots.length > 0) {
+      renderStep3Content();
+      return;
+    }
+
+    const url = withParam(CONFIG.scriptUrl, 'action=availability&service=' + encodeURIComponent(state.selectedService.name));
+    jsonp(url, function (data) {
+      if (data.error) {
+        contentEl.innerHTML = '';
+        showStatus('Could not load availability: ' + data.error, true);
+        return;
+      }
+      state.slots = data.slots || [];
+      renderStep3Content();
+    });
+  }
+
+  function groupSlotsByDay(slots) {
+    const groups = {};
+    const order = [];
+    slots.forEach(function (slot) {
+      const dayKey = slot.label.split(' - ')[0]; // "Tue, Sep 10"
+      if (!groups[dayKey]) { groups[dayKey] = []; order.push(dayKey); }
+      groups[dayKey].push(slot);
+    });
+    return order.map(function (key) { return { day: key, slots: groups[key] }; });
+  }
+
+  function renderStep3Content() {
+    contentEl.innerHTML = '';
+
+    if (state.slots.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'bk-empty-note';
+      empty.textContent = 'No open times found for this service right now. Please try a different service or check back soon.';
+      contentEl.appendChild(empty);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'bk-slots-wrap';
+
+      groupSlotsByDay(state.slots).forEach(function (group) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'bk-day-group';
+        const dayLabel = document.createElement('div');
+        dayLabel.className = 'bk-day-label';
+        dayLabel.textContent = group.day;
+        dayDiv.appendChild(dayLabel);
+
+        const grid = document.createElement('div');
+        grid.className = 'bk-slot-grid';
+        group.slots.forEach(function (slot) {
+          const timeLabel = slot.label.split(' - ')[1]; // "9:00 AM"
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'bk-slot-btn' + (state.selectedSlot && state.selectedSlot.startIso === slot.startIso ? ' selected' : '');
+          btn.textContent = timeLabel;
+          btn.addEventListener('click', () => {
+            state.selectedSlot = slot;
+            renderStep3Content();
+          });
+          grid.appendChild(btn);
+        });
+        dayDiv.appendChild(grid);
+        wrap.appendChild(dayDiv);
+      });
+
+      contentEl.appendChild(wrap);
+    }
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 2; renderStep2(); });
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = !state.selectedSlot;
+    nextBtn.addEventListener('click', () => {
+      if (!state.selectedSlot) return;
+      clearStatus();
+      state.step = 4;
+      renderStep4();
+    });
+    navRow.appendChild(backBtn);
+    navRow.appendChild(nextBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Step 4 — address (if needed), notes, extra fields, submit
+  // ─────────────────────────────────────────────────────────
+  function renderStep4() {
+    setStepLabel('Step 4 of 4 - Final Details');
+    contentEl.innerHTML = '';
+
+    const summary = document.createElement('div');
+    summary.className = 'bk-summary';
+    summary.textContent = state.selectedService.name + ' - ' + state.selectedSlot.label;
+    contentEl.appendChild(summary);
+
+    if (state.selectedService.requiresAddress) {
+      const addrLabel = document.createElement('label');
+      addrLabel.textContent = 'Address *';
+      const addrInput = document.createElement('input');
+      addrInput.type = 'text'; addrInput.value = state.address;
+      addrInput.placeholder = 'Where the service is needed';
+      addrInput.addEventListener('input', () => state.address = addrInput.value);
+      addrLabel.appendChild(addrInput);
+      contentEl.appendChild(addrLabel);
+    }
+
+    (CONFIG.extraFields || []).forEach(function (field, i) {
+      const label = document.createElement('label');
+      label.textContent = field.label + (field.required ? ' *' : '');
+      let input;
+      if (field.type === 'select') {
+        input = document.createElement('select');
+        const blank = document.createElement('option');
+        blank.value = ''; blank.textContent = '-- Select --';
+        input.appendChild(blank);
+        (field.options || []).forEach(function (opt) {
+          const o = document.createElement('option'); o.value = opt; o.textContent = opt;
+          input.appendChild(o);
+        });
+      } else if (field.type === 'textarea') {
+        input = document.createElement('textarea');
+      } else {
+        input = document.createElement('input');
+        input.type = field.type || 'text';
+      }
+      input.value = state.extraValues[field.label] || '';
+      input.addEventListener('input', () => state.extraValues[field.label] = input.value);
+      label.appendChild(input);
+      contentEl.appendChild(label);
+    });
+
+    const notesLabel = document.createElement('label');
+    notesLabel.textContent = 'Notes';
+    const notesInput = document.createElement('textarea');
+    notesInput.value = state.notes;
+    notesInput.placeholder = 'Anything we should know before your appointment';
+    notesInput.addEventListener('input', () => state.notes = notesInput.value);
+    notesLabel.appendChild(notesInput);
+    contentEl.appendChild(notesLabel);
+
+    const navRow = document.createElement('div');
+    navRow.className = 'bk-nav-row';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'bk-secondary';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { state.step = 3; renderStep3(); });
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Confirm Booking';
+    submitBtn.addEventListener('click', submitBooking);
+    navRow.appendChild(backBtn);
+    navRow.appendChild(submitBtn);
+    contentEl.appendChild(navRow);
+
+    renderStatusEl();
+  }
+
+  function submitBooking() {
+    if (state.selectedService.requiresAddress && !state.address) {
+      showStatus('Please enter an address.', true);
+      return;
+    }
+
+    const fields = {
+      Name: state.name,
+      Phone: state.phone,
+      Email: state.email,
+      Address: state.address,
+      Notes: state.notes
+    };
+    Object.assign(fields, state.extraValues);
+
+    const payload = {
+      fields: fields,
+      service: state.selectedService.name,
+      slotStart: state.selectedSlot.startIso,
+      slotEnd: state.selectedSlot.endIso,
+      sourcePage: window.location.href
+    };
+
+    showStatus('Booking your appointment...', false);
+
+    fetch(CONFIG.scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        contentEl.innerHTML = '';
+        stepLabelEl.textContent = '';
+        showStatus(CONFIG.successMessage, false);
+      })
+      .catch(() => {
+        showStatus(CONFIG.errorMessage, true);
+      });
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Status line (shared across steps)
+  // ─────────────────────────────────────────────────────────
+  let statusText = '';
+  let statusIsError = false;
+  function showStatus(text, isError) { statusText = text; statusIsError = isError; renderStatusEl(); }
+  function clearStatus() { statusText = ''; renderStatusEl(); }
+  function renderStatusEl() {
+    let el = document.getElementById('bk-status-line');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'bk-status-line';
+      el.className = 'bk-status';
+      contentEl.parentNode.insertBefore(el, footerEl);
+    }
+    el.textContent = statusText;
+    el.style.color = statusIsError ? '#b91c1c' : '';
+  }
+
+  // Start the wizard
+  renderStep1();
+`;
+
+  // Code.gs template with placeholders for services/calendar/window.
+  const CODE_GS_TEMPLATE = `/**
+ * Simple Appointment Booking (with real Calendar availability) —
+ * Google Apps Script Web App
+ *
+ * WHAT THIS DOES:
+ *  - Shows customers REAL open time slots, computed from YOUR Google
+ *    Calendar (so it never offers a time you're already busy).
+ *  - When someone books a slot, it writes a row to your Google Sheet
+ *    AND creates an event on your Calendar immediately, so the slot
+ *    is instantly blocked off for anyone else.
+ *
+ * WHY THIS WORKS WITHOUT ASKING CUSTOMERS TO LOG IN:
+ * This script runs "as you" (whoever deploys it), not as the visitor.
+ * That's what the "Execute as: Me" deployment setting means. So it
+ * can read and write YOUR Calendar without the customer ever seeing
+ * a Google login screen.
+ *
+ * SETUP:
+ * 1. Create a new Google Sheet. Rename the first tab "Bookings".
+ * 2. Add a header row — use "Download Google Sheet Template (CSV)"
+ *    in the booking builder and import it.
+ * 3. In the Sheet: Extensions > Apps Script. Delete any starter code
+ *    and paste this file's contents in.
+ * 4. Edit the SERVICES list below — the booking builder generates
+ *    this for you automatically once you set up your services there,
+ *    so you'll usually paste in a version already filled out.
+ * 5. Set CALENDAR_ID below if you want a Calendar other than your
+ *    main one (see comment above that variable for how to find one).
+ * 6. Deploy > New deployment > Web app.
+ *    - Execute as: Me
+ *    - Who has access: Anyone
+ *    Copy the Web App URL (ends in /exec).
+ * 7. Paste that URL into the booking builder, then download the
+ *    finished booking-form.html.
+ * 8. Re-deploy (Deploy > Manage deployments > edit > New version) any
+ *    time you change this script — including editing SERVICES.
+ */
+
+// Which Google Calendar to check/write to. "default" uses the
+// Calendar of whoever deploys this script (the business owner's main
+// calendar). To use a different one: in Google Calendar, go to that
+// calendar's Settings > "Integrate calendar" > copy its Calendar ID,
+// and paste it here instead of "default".
+var CALENDAR_ID = '__CALENDAR_ID_PLACEHOLDER__';
+
+// How many days ahead to offer appointment slots for.
+var BOOKING_WINDOW_DAYS = __BOOKING_WINDOW_DAYS_PLACEHOLDER__;
+
+// Each service: name, how long it takes, whether an address is
+// needed, and which days/hours it can be booked. Days: 0=Sun, 1=Mon,
+// ... 6=Sat. Times are 24-hour "HH:MM". A service can have more than
+// one availability block (e.g. different hours on different days).
+// The booking builder's "Services & Availability" section generates
+// this array for you — edit there rather than by hand when possible.
+var SERVICES = __SERVICES_PLACEHOLDER__;
+
+function getCalendar_() {
+  return CALENDAR_ID === 'default' ? CalendarApp.getDefaultCalendar() : CalendarApp.getCalendarById(CALENDAR_ID);
+}
+
+function findService_(name) {
+  for (var i = 0; i < SERVICES.length; i++) {
+    if (SERVICES[i].name === name) return SERVICES[i];
+  }
+  return null;
+}
+
+function parseTimeToMinutes_(hhmm) {
+  var parts = hhmm.split(':');
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+}
+
+/**
+ * Computes open slots for a service over the next BOOKING_WINDOW_DAYS
+ * days, checking the real Calendar for conflicts.
+ * Returns an array of { startIso, endIso, label } objects.
+ */
+function computeAvailableSlots_(serviceName) {
+  var service = findService_(serviceName);
+  if (!service) return [];
+
+  var calendar = getCalendar_();
+  var duration = service.durationMinutes;
+  var slots = [];
+  var now = new Date();
+
+  for (var d = 0; d < BOOKING_WINDOW_DAYS; d++) {
+    var day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
+    var dayOfWeek = day.getDay();
+
+    var blocksForDay = service.availability.filter(function (b) { return b.day === dayOfWeek; });
+    if (blocksForDay.length === 0) continue;
+
+    // Get existing events on this calendar for this day, once, to
+    // check all candidate slots against.
+    var dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0);
+    var dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59);
+    var existingEvents = calendar.getEvents(dayStart, dayEnd);
+
+    blocksForDay.forEach(function (block) {
+      var startMinutes = parseTimeToMinutes_(block.start);
+      var endMinutes = parseTimeToMinutes_(block.end);
+
+      for (var t = startMinutes; t + duration <= endMinutes; t += duration) {
+        var slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, t, 0);
+        var slotEnd = new Date(slotStart.getTime() + duration * 60000);
+
+        // Skip slots that have already passed today
+        if (slotStart < now) continue;
+
+        // Skip slots that overlap any existing event
+        var conflict = existingEvents.some(function (ev) {
+          return slotStart < ev.getEndTime() && slotEnd > ev.getStartTime();
+        });
+        if (conflict) continue;
+
+        slots.push({
+          startIso: slotStart.toISOString(),
+          endIso: slotEnd.toISOString(),
+          label: Utilities.formatDate(slotStart, Session.getScriptTimeZone(), 'EEE, MMM d - h:mm a')
+        });
+      }
+    });
+  }
+
+  return slots;
+}
+
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Bookings');
+    var data = JSON.parse(e.postData.contents);
+    var formFields = data.fields || {};
+    var serviceName = data.service;
+    var slotStartIso = data.slotStart;
+    var slotEndIso = data.slotEnd;
+
+    var service = findService_(serviceName);
+    var eventId = '';
+
+    // Create the Calendar event immediately, so the slot is blocked
+    // off right away — before we even finish writing the Sheet row.
+    if (service && slotStartIso && slotEndIso) {
+      var calendar = getCalendar_();
+      var title = service.name + ' - ' + (formFields['Name'] || 'Customer');
+      var description = Object.keys(formFields).map(function (k) {
+        return k + ': ' + formFields[k];
+      }).join('\\n');
+      var event = calendar.createEvent(title, new Date(slotStartIso), new Date(slotEndIso), {
+        description: description
+      });
+      eventId = event.getId();
+    }
+
+    var lastColumn = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+
+    var normalizedFields = {};
+    for (var key in formFields) {
+      normalizedFields[key.toString().trim().toLowerCase()] = formFields[key];
+    }
+
+    var row = headers.map(function (header) {
+      var headerText = String(header).trim();
+      var headerKey = headerText.toLowerCase();
+
+      if (headerKey === 'timestamp') return new Date();
+      if (headerKey === 'status') return 'Confirmed'; // slot is already blocked on the calendar
+      if (headerKey === 'source page') return data.sourcePage || '';
+      if (headerKey === 'service') return serviceName || '';
+      if (headerKey === 'appointment time') return slotStartIso ? new Date(slotStartIso) : '';
+      if (headerKey === 'calendar event id') return eventId;
+
+      return normalizedFields.hasOwnProperty(headerKey) ? normalizedFields[headerKey] : '';
+    });
+
+    sheet.appendRow(row);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'success' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: 'error', message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Handles GET requests:
+ *  - Plain visit (no params) — confirms the deployment is alive.
+ *  - ?action=services&callback=... — returns the SERVICES list (name,
+ *    duration, whether an address is required) as JSONP, so the form
+ *    can build its service-selection step.
+ *  - ?action=availability&service=...&callback=... — returns open
+ *    slots for that service as JSONP.
+ *
+ * JSONP (wrapping the JSON in a function call) is used instead of
+ * plain JSON so the browser can read the response without hitting
+ * CORS restrictions — <script> tags aren't subject to CORS the way
+ * fetch()/XHR responses are.
+ */
+function doGet(e) {
+  var params = (e && e.parameter) || {};
+
+  if (!params.callback) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'Booking endpoint is live' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var callback = params.callback;
+  var payload;
+
+  try {
+    if (params.action === 'services') {
+      payload = {
+        services: SERVICES.map(function (s) {
+          return { name: s.name, durationMinutes: s.durationMinutes, requiresAddress: !!s.requiresAddress };
+        })
+      };
+    } else if (params.action === 'availability' && params.service) {
+      payload = { slots: computeAvailableSlots_(params.service) };
+    } else {
+      payload = { error: 'Unknown or missing action.' };
+    }
+  } catch (error) {
+    payload = { error: error.toString() };
+  }
+
+  return ContentService
+    .createTextOutput(callback + '(' + JSON.stringify(payload) + ')')
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+`;
+
+  function buildCodeGs() {
+    const servicesLiteral = JSON.stringify(state.services, null, 2);
+    return CODE_GS_TEMPLATE
+      .replace("__CALENDAR_ID_PLACEHOLDER__", state.calendarId)
+      .replace("__BOOKING_WINDOW_DAYS_PLACEHOLDER__", state.bookingWindowDays)
+      .replace("__SERVICES_PLACEHOLDER__", servicesLiteral);
+  }
+
+  function generateFullHTML() {
+    const configJson = JSON.stringify({
+      scriptUrl: state.scriptUrl,
+      logo: state.logo,
+      title: state.title,
+      footer: state.footer,
+      successMessage: state.successMessage,
+      errorMessage: state.errorMessage,
+      extraFields: state.extraFields,
+      theme: state.theme
+    }, null, 2);
+
+    return `<!--
+  Simple Appointment Booking Form — generated by booking-builder.html
+  Re-open booking-builder.html anytime to keep editing visually,
+  or hand-edit the CONFIG block below directly.
+-->
+${STYLE_BLOCK}
+
+${MARKUP_BLOCK}
+
+<script>
+  const CONFIG = ${configJson};
+${ENGINE_SCRIPT}
+<\/script>
+`;
+  }
+
+  function csvEscape(value) {
+    if (value.indexOf(",") !== -1 || value.indexOf('"') !== -1) {
+      return '"' + value.replace(/"/g, '""') + '"';
+    }
+    return value;
+  }
+
+  function generateSheetTemplateCSV() {
+    const headers = ["Timestamp", "Name", "Phone", "Email", "Service", "Appointment Time", "Address", "Notes"]
+      .concat(state.extraFields.map(f => f.label))
+      .concat(["Source Page", "Status", "Calendar Event ID"]);
+    return headers.map(csvEscape).join(",") + "\n";
+  }
+
+  // ------------------------------------------------------------
+  // PREVIEW-ONLY engine: same UI code, but fakes the two JSONP
+  // endpoints locally (no real calendar) so the iframe preview
+  // works without a live backend.
+  // ------------------------------------------------------------
+  function buildPreviewHTML(startStep) {
+    startStep = startStep || 1;
+    const configJson = JSON.stringify({
+      scriptUrl: "PREVIEW_MODE",
+      logo: state.logo,
+      title: state.title,
+      footer: state.footer,
+      successMessage: state.successMessage,
+      errorMessage: state.errorMessage,
+      extraFields: state.extraFields,
+      theme: state.theme
+    }, null, 2);
+
+    const previewServicesJson = JSON.stringify(state.services, null, 2);
+
+    // Same engine, but jsonp() is replaced with a local mock that
+    // reads from PREVIEW_SERVICES instead of hitting a real network.
+    const previewEngine = ENGINE_SCRIPT.replace(
+      /\/\/ JSONP helper[\s\S]*?document\.body\.appendChild\(script\);\n  \}/,
+      `function jsonp(url, onData) {
+    setTimeout(function () {
+      const params = new URLSearchParams(url.split("?")[1] || "");
+      const action = params.get("action");
+      if (action === "services") {
+        onData({ services: PREVIEW_SERVICES.map(function (s) {
+          return { name: s.name, durationMinutes: s.durationMinutes, requiresAddress: !!s.requiresAddress };
+        }) });
+      } else if (action === "availability") {
+        const serviceName = params.get("service");
+        const service = PREVIEW_SERVICES.filter(function (s) { return s.name === serviceName; })[0];
+        onData({ slots: computePreviewSlots(service) });
+      } else {
+        onData({ error: "Unknown preview action" });
+      }
+    }, 250);
+  }
+
+  function computePreviewSlots(service) {
+    if (!service) return [];
+    const slots = [];
+    const now = new Date();
+    for (var d = 0; d < 7; d++) {
+      const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
+      const dow = day.getDay();
+      const blocks = service.availability.filter(function (b) { return b.day === dow; });
+      blocks.forEach(function (block) {
+        const startParts = block.start.split(":").map(Number);
+        const endParts = block.end.split(":").map(Number);
+        let t = startParts[0] * 60 + startParts[1];
+        const endMin = endParts[0] * 60 + endParts[1];
+        while (t + service.durationMinutes <= endMin) {
+          const slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, t, 0);
+          if (slotStart >= now) {
+            const slotEnd = new Date(slotStart.getTime() + service.durationMinutes * 60000);
+            const label = slotStart.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+              + " - " + slotStart.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+            slots.push({ startIso: slotStart.toISOString(), endIso: slotEnd.toISOString(), label: label });
+          }
+          t += service.durationMinutes;
+        }
+      });
+    }
+    return slots;
+  }`
+    ).replace(
+      /\/\/ Start the wizard\n  renderStep1\(\);/,
+      `// Preview mode: jump straight to the requested step with
+  // placeholder data already filled in, instead of always starting
+  // at step 1.
+  state.name = 'Jane Doe';
+  state.phone = '555-123-4567';
+  state.email = 'jane@example.com';
+
+  function startPreviewAtStep(step) {
+    if (step === 1) {
+      state.step = 1;
+      renderStep1();
+      return;
+    }
+    if (step === 2) {
+      state.step = 2;
+      renderStep2();
+      return;
+    }
+    // Steps 3 and 4 need a selected service (and step 4 a selected
+    // slot) before they can render, so fetch those first.
+    jsonp(withParam(CONFIG.scriptUrl, 'action=services'), function (data) {
+      state.services = data.services || [];
+      state.selectedService = state.services[0] || null;
+      if (!state.selectedService) { state.step = 2; renderStep2(); return; }
+
+      if (step === 3) {
+        state.step = 3;
+        renderStep3();
+        return;
+      }
+
+      const url = withParam(CONFIG.scriptUrl, 'action=availability&service=' + encodeURIComponent(state.selectedService.name));
+      jsonp(url, function (slotData) {
+        state.slots = slotData.slots || [];
+        state.selectedSlot = state.slots[0] || null;
+        state.step = 4;
+        renderStep4();
+      });
+    });
+  }
+
+  startPreviewAtStep(${startStep});`
+    );
+
+    return `<!--
+  PREVIEW MODE — simulated availability, no real calendar checked.
+-->
+${STYLE_BLOCK}
+
+<div class="preview-note" style="max-width:460px;margin:0 auto 8px;">Preview mode: showing simulated availability, not your real calendar.</div>
+
+${MARKUP_BLOCK}
+
+<script>
+  const PREVIEW_SERVICES = ${previewServicesJson};
+  const CONFIG = ${configJson};
+${previewEngine}
+<\/script>
+`;
+  }
+
+  let currentPreviewStep = 1;
+
+  function renderPreview() {
+    document.getElementById("preview-frame").srcdoc = buildPreviewHTML(currentPreviewStep);
+  }
+
+  function jumpPreviewToStep(step) {
+    currentPreviewStep = step;
+    document.querySelectorAll("#preview-step-tabs button").forEach(btn => {
+      btn.classList.toggle("active", parseInt(btn.dataset.step, 10) === step);
+    });
+    renderPreview();
+  }
+
+  document.querySelectorAll("#preview-step-tabs button").forEach(btn => {
+    btn.addEventListener("click", () => jumpPreviewToStep(parseInt(btn.dataset.step, 10)));
+  });
+
+  // ============================================================
+  // CONTROLS UI
+  // ============================================================
+  const controlsEl = document.getElementById("controls");
+
+  function el(tag, props, children) {
+    const e = document.createElement(tag);
+    Object.assign(e, props || {});
+    (children || []).forEach(c => e.appendChild(c));
+    return e;
+  }
+
+  function helpButton(helpHtml) {
+    const btn = el("button", { type: "button", className: "help-btn" });
+    btn.textContent = "?";
+    const box = el("div", { className: "help-box" });
+    box.innerHTML = helpHtml;
+    btn.addEventListener("click", () => { box.classList.toggle("open"); });
+    return { btn, box };
+  }
+
+  function textControl(labelText, hint, value, onChange, type, helpHtml) {
+    const wrapper = el("label", { className: "control" });
+    const labelRow = el("div", { className: "label-row" });
+    labelRow.appendChild(document.createTextNode(labelText));
+    if (helpHtml) {
+      const { btn, box } = helpButton(helpHtml);
+      labelRow.appendChild(btn);
+      wrapper.appendChild(labelRow);
+      if (hint) { const h = el("span", { className: "hint" }); h.textContent = hint; wrapper.appendChild(h); }
+      wrapper.appendChild(box);
+    } else {
+      wrapper.appendChild(labelRow);
+      if (hint) { const h = el("span", { className: "hint" }); h.textContent = hint; wrapper.appendChild(h); }
+    }
+    const input = el(type === "textarea" ? "textarea" : "input", { type: type || "text", value: value });
+    if (type === "textarea") input.value = value;
+    input.addEventListener("input", () => { onChange(input.value); renderPreview(); });
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  function numberControl(labelText, hint, value, onChange) {
+    const wrapper = el("label", { className: "control" });
+    wrapper.appendChild(document.createTextNode(labelText));
+    if (hint) { const h = el("span", { className: "hint" }); h.textContent = hint; wrapper.appendChild(h); }
+    const input = el("input", { type: "number", value: value });
+    input.addEventListener("input", () => { onChange(parseInt(input.value, 10) || 0); renderPreview(); });
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  function colorControl(labelText, value, onChange) {
+    const wrapper = el("label", { className: "control" });
+    wrapper.appendChild(document.createTextNode(labelText));
+    const row = el("div", { className: "color-row" });
+    const colorInput = el("input", { type: "color", value: value });
+    const textInput = el("input", { type: "text", value: value });
+    colorInput.addEventListener("input", () => { textInput.value = colorInput.value; onChange(colorInput.value); renderPreview(); });
+    textInput.addEventListener("input", () => { onChange(textInput.value); renderPreview(); });
+    row.appendChild(colorInput);
+    row.appendChild(textInput);
+    wrapper.appendChild(row);
+    return wrapper;
+  }
+
+  function fileToDataUrl(file, callback) {
+    const reader = new FileReader();
+    reader.onload = () => callback(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  // ---- Services & Availability ----
+  function buildServiceCard(service, index) {
+    const card = el("div", { className: "service-card" });
+
+    const top = el("div", { className: "service-card-top" });
+    const strong = el("strong"); strong.textContent = "Service " + (index + 1) + ": " + service.name;
+    top.appendChild(strong);
+    const removeBtn = el("button", { className: "danger", type: "button" });
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => { state.services.splice(index, 1); renderControls(); renderPreview(); });
+    top.appendChild(removeBtn);
+    card.appendChild(top);
+
+    const nameWrap = el("label", { className: "control" });
+    nameWrap.appendChild(document.createTextNode("Service Name"));
+    const nameInput = el("input", { type: "text", value: service.name });
+    nameInput.addEventListener("input", () => { service.name = nameInput.value; strong.textContent = "Service " + (index + 1) + ": " + service.name; renderPreview(); });
+    nameWrap.appendChild(nameInput);
+    card.appendChild(nameWrap);
+
+    const row = el("div", { className: "service-row" });
+    const durWrap = el("div");
+    const durLabel = el("label", { className: "control" });
+    durLabel.appendChild(document.createTextNode("Duration (minutes)"));
+    const durInput = el("input", { type: "number", value: service.durationMinutes });
+    durInput.addEventListener("input", () => { service.durationMinutes = parseInt(durInput.value, 10) || 30; renderPreview(); });
+    durLabel.appendChild(durInput);
+    durWrap.appendChild(durLabel);
+    row.appendChild(durWrap);
+
+    const addrWrap = el("div");
+    const addrLabel = el("label", { className: "control" });
+    addrLabel.appendChild(document.createTextNode("Needs an address?"));
+    const addrCheckboxRow = el("label", { className: "checkbox-row" });
+    const addrCheckbox = el("input", { type: "checkbox", checked: !!service.requiresAddress });
+    addrCheckbox.addEventListener("change", () => { service.requiresAddress = addrCheckbox.checked; renderPreview(); });
+    addrCheckboxRow.appendChild(addrCheckbox);
+    addrCheckboxRow.appendChild(document.createTextNode(" Show address field (in-person service)"));
+    addrLabel.appendChild(addrCheckboxRow);
+    addrWrap.appendChild(addrLabel);
+    row.appendChild(addrWrap);
+    card.appendChild(row);
+
+    const availLabel = el("label", { className: "control" });
+    availLabel.appendChild(document.createTextNode("Availability"));
+    const availHint = el("span", { className: "hint" });
+    availHint.textContent = "Turn on the days this service can be booked, and set the hours for each.";
+    availLabel.appendChild(availHint);
+
+    const dayGrid = el("div", { className: "day-grid" });
+    DAY_NAMES.forEach((dayName, dayNum) => {
+      const existing = service.availability.find(b => b.day === dayNum);
+      const dayRow = el("div", { className: "day-row" + (existing ? "" : " disabled") });
+
+      const toggleWrap = el("label", { className: "day-toggle" });
+      const toggle = el("input", { type: "checkbox", checked: !!existing });
+      toggleWrap.appendChild(toggle);
+      toggleWrap.appendChild(document.createTextNode(" " + dayName));
+      dayRow.appendChild(toggleWrap);
+
+      const timesWrap = el("div", { className: "day-times" });
+      const startInput = el("input", { type: "time", value: existing ? existing.start : "09:00" });
+      const toLabel = document.createTextNode(" to ");
+      const endInput = el("input", { type: "time", value: existing ? existing.end : "17:00" });
+      timesWrap.appendChild(startInput);
+      timesWrap.appendChild(toLabel);
+      timesWrap.appendChild(endInput);
+      dayRow.appendChild(timesWrap);
+
+      function syncBlock() {
+        const idx = service.availability.findIndex(b => b.day === dayNum);
+        if (toggle.checked) {
+          const block = { day: dayNum, start: startInput.value, end: endInput.value };
+          if (idx === -1) { service.availability.push(block); } else { service.availability[idx] = block; }
+          dayRow.classList.remove("disabled");
+        } else {
+          if (idx !== -1) service.availability.splice(idx, 1);
+          dayRow.classList.add("disabled");
+        }
+        renderPreview();
+      }
+
+      toggle.addEventListener("change", syncBlock);
+      startInput.addEventListener("input", syncBlock);
+      endInput.addEventListener("input", syncBlock);
+
+      dayGrid.appendChild(dayRow);
+    });
+    availLabel.appendChild(dayGrid);
+    card.appendChild(availLabel);
+
+    return card;
+  }
+
+  // ---- Extra fields (step 4 add-ons) ----
+  function buildExtraFieldCard(field, index) {
+    const card = el("div", { className: "service-card" });
+    const top = el("div", { className: "service-card-top" });
+    const strong = el("strong"); strong.textContent = "Extra Field " + (index + 1) + ": " + field.label;
+    top.appendChild(strong);
+    const removeBtn = el("button", { className: "danger", type: "button" });
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => { state.extraFields.splice(index, 1); renderControls(); renderPreview(); });
+    top.appendChild(removeBtn);
+    card.appendChild(top);
+
+    const labelWrap = el("label", { className: "control" });
+    labelWrap.appendChild(document.createTextNode("Question / Label"));
+    const labelInput = el("input", { type: "text", value: field.label });
+    labelInput.addEventListener("input", () => { field.label = labelInput.value; strong.textContent = "Extra Field " + (index + 1) + ": " + field.label; renderPreview(); });
+    labelWrap.appendChild(labelInput);
+    card.appendChild(labelWrap);
+
+    const row = el("div", { className: "service-row" });
+    const typeWrap = el("div");
+    const typeLabel = el("label", { className: "control" });
+    typeLabel.appendChild(document.createTextNode("Answer Type"));
+    const typeSelect = el("select");
+    [["text", "Short answer"], ["email", "Email address"], ["tel", "Phone number"], ["textarea", "Long answer"], ["select", "Dropdown choices"]].forEach(([val, text]) => {
+      const opt = el("option", { value: val }); opt.textContent = text;
+      if (val === field.type) opt.selected = true;
+      typeSelect.appendChild(opt);
+    });
+    typeSelect.addEventListener("change", () => {
+      field.type = typeSelect.value;
+      if (field.type === "select" && !field.options) field.options = ["Option 1", "Option 2"];
+      renderControls(); renderPreview();
+    });
+    typeLabel.appendChild(typeSelect);
+    typeWrap.appendChild(typeLabel);
+    row.appendChild(typeWrap);
+
+    const reqWrap = el("div");
+    const reqTopLabel = el("label", { className: "control" });
+    reqTopLabel.appendChild(document.createTextNode("Required?"));
+    const reqRow = el("label", { className: "checkbox-row" });
+    const reqCheckbox = el("input", { type: "checkbox", checked: !!field.required });
+    reqCheckbox.addEventListener("change", () => { field.required = reqCheckbox.checked; renderPreview(); });
+    reqRow.appendChild(reqCheckbox);
+    reqRow.appendChild(document.createTextNode(" Must be filled in"));
+    reqTopLabel.appendChild(reqRow);
+    reqWrap.appendChild(reqTopLabel);
+    row.appendChild(reqWrap);
+    card.appendChild(row);
+
+    if (field.type === "select") {
+      const optWrap = el("label", { className: "control" });
+      optWrap.appendChild(document.createTextNode("Dropdown Choices"));
+      const optContainer = el("div");
+      buildOptionsEditor(field, optContainer);
+      optWrap.appendChild(optContainer);
+      card.appendChild(optWrap);
+    }
+
+    return card;
+  }
+
+  function buildOptionsEditor(field, container) {
+    container.innerHTML = "";
+    (field.options || []).forEach((opt, i) => {
+      const row = el("div", { className: "option-row" });
+      const input = el("input", { type: "text", value: opt });
+      input.addEventListener("input", () => { field.options[i] = input.value; renderPreview(); });
+      const removeBtn = el("button", { className: "small danger", type: "button" });
+      removeBtn.textContent = "✕";
+      removeBtn.addEventListener("click", () => { field.options.splice(i, 1); buildOptionsEditor(field, container); renderPreview(); });
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+    });
+    const addBtn = el("button", { className: "small", type: "button" });
+    addBtn.textContent = "+ Add Choice";
+    addBtn.addEventListener("click", () => {
+      if (!field.options) field.options = [];
+      field.options.push("New Choice");
+      buildOptionsEditor(field, container);
+      renderPreview();
+    });
+    container.appendChild(addBtn);
+  }
+
+  function renderControls() {
+    controlsEl.innerHTML = "";
+
+    // --- Basics ---
+    const basics = el("section");
+    const basicsH3 = el("h3"); basicsH3.textContent = "Basics"; basics.appendChild(basicsH3);
+
+    basics.appendChild(textControl(
+      "Apps Script Web App URL", "Paste your deployed /exec URL here", state.scriptUrl, v => state.scriptUrl = v, "text",
+      `<strong>What is this?</strong> The address connecting your form to your Google Sheet AND your Google Calendar. You create the Sheet yourself first, then this URL comes from deploying the script.
+      <ol>
+        <li>Finish setting up your services further down this page first.</li>
+        <li>Scroll down and click <strong>Download Google Sheet Template (CSV)</strong>.</li>
+        <li>Go to <strong>sheets.google.com</strong> → new blank Sheet → <strong>File &gt; Import &gt; Upload</strong> → select that CSV → choose <strong>Replace current sheet</strong>. Rename the tab to "Bookings".</li>
+        <li>In the Sheet's menu: <strong>Extensions &gt; Apps Script</strong>. Delete the placeholder code you see there.</li>
+        <li>Scroll down and click <strong>Download Code.gs (Apps Script)</strong> below, open that file, copy everything in it, and paste it into the empty Apps Script editor. Save.</li>
+        <li>Click <strong>Deploy &gt; New deployment</strong>, choose type <strong>Web app</strong>.</li>
+        <li>Set "Execute as" to <strong>Me</strong> (this is what lets it check YOUR calendar) and "Who has access" to <strong>Anyone</strong>, then click Deploy.</li>
+        <li>Google gives you a URL ending in <strong>/exec</strong> — copy that and paste it into this box.</li>
+      </ol>`
+    ));
+
+    const testUrlRow = el("div", { style: "margin-top: -6px; margin-bottom: 12px;" });
+    const testUrlBtn = el("button", { type: "button", className: "small" });
+    testUrlBtn.textContent = "Test URL (opens in a new tab)";
+    const testUrlStatus = el("span", { style: "font-size: 12px; margin-left: 8px; color: #6b7280;" });
+    testUrlBtn.addEventListener("click", () => {
+      if (!state.scriptUrl || state.scriptUrl === "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE") {
+        testUrlStatus.textContent = "Paste a URL first.";
+        testUrlStatus.style.color = "#b91c1c";
+        return;
+      }
+      window.open(state.scriptUrl, "_blank");
+      testUrlStatus.textContent = 'Opened — you should see: {"status":"Booking endpoint is live"}';
+      testUrlStatus.style.color = "#059669";
+    });
+    testUrlRow.appendChild(testUrlBtn);
+    testUrlRow.appendChild(testUrlStatus);
+    basics.appendChild(testUrlRow);
+
+    basics.appendChild(textControl(
+      "Google Calendar to check/use", "Leave as 'default' to use your main calendar",
+      state.calendarId, v => state.calendarId = v, "text",
+      `<strong>What is this?</strong> Which Google Calendar gets checked for availability and gets new events created on it. Leave as <strong>default</strong> to use the main calendar of whoever deploys the script. To use a different calendar: in Google Calendar, open that calendar's Settings → "Integrate calendar" → copy its Calendar ID → paste it here instead.`
+    ));
+
+    basics.appendChild(numberControl("Booking Window (days ahead)", "How many days ahead customers can book", state.bookingWindowDays, v => state.bookingWindowDays = v));
+    basics.appendChild(textControl("Form Title", "Shown above the form", state.title, v => state.title = v));
+    basics.appendChild(textControl("Footer Text", "Shown below the button. Leave blank to hide.", state.footer, v => state.footer = v));
+    basics.appendChild(textControl("Success Message", "", state.successMessage, v => state.successMessage = v));
+    basics.appendChild(textControl("Error Message", "", state.errorMessage, v => state.errorMessage = v));
+    controlsEl.appendChild(basics);
+
+    // --- Logo ---
+    const logoSection = el("section");
+    const logoH3 = el("h3"); logoH3.textContent = "Logo"; logoSection.appendChild(logoH3);
+    const logoHint = el("div", { className: "section-hint" });
+    logoHint.textContent = "Upload an image. It appears centered above the title.";
+    logoSection.appendChild(logoHint);
+    const logoFileInput = el("input", { type: "file", accept: "image/*" });
+    logoFileInput.addEventListener("change", () => {
+      const file = logoFileInput.files[0];
+      if (!file) return;
+      fileToDataUrl(file, (dataUrl) => { state.logo.url = dataUrl; renderControls(); renderPreview(); });
+    });
+    logoSection.appendChild(logoFileInput);
+    if (state.logo.url) {
+      logoSection.appendChild(el("img", { className: "logo-preview", src: state.logo.url }));
+      const removeLogoBtn = el("button", { className: "small danger", type: "button" });
+      removeLogoBtn.style.marginTop = "8px";
+      removeLogoBtn.textContent = "Remove Logo";
+      removeLogoBtn.addEventListener("click", () => { state.logo.url = ""; renderControls(); renderPreview(); });
+      logoSection.appendChild(removeLogoBtn);
+    }
+    controlsEl.appendChild(logoSection);
+
+    // --- Appearance ---
+    const appearance = el("section");
+    const appH3 = el("h3"); appH3.textContent = "Appearance"; appearance.appendChild(appH3);
+    appearance.appendChild(colorControl("Primary Color", state.theme.primaryColor, v => state.theme.primaryColor = v));
+    appearance.appendChild(colorControl("Text Color", state.theme.textColor, v => state.theme.textColor = v));
+    appearance.appendChild(colorControl("Border Color", state.theme.borderColor, v => state.theme.borderColor = v));
+    appearance.appendChild(textControl("Corner Rounding", "e.g. 8px, 0px for square corners", state.theme.borderRadius, v => state.theme.borderRadius = v));
+
+    const bgLabel = el("label", { className: "control" });
+    bgLabel.appendChild(document.createTextNode("Background"));
+    const bgGroup = el("div", { className: "radio-group" });
+    [["solid", "Solid color"], ["transparent", "No background (blends into the site)"], ["image", "Upload a background image"]].forEach(([val, text]) => {
+      const wrap = el("label");
+      const radio = el("input", { type: "radio", name: "bgmode", checked: state.theme.backgroundType === val });
+      radio.addEventListener("change", () => { state.theme.backgroundType = val; renderControls(); renderPreview(); });
+      wrap.appendChild(radio);
+      wrap.appendChild(document.createTextNode(" " + text));
+      bgGroup.appendChild(wrap);
+    });
+    bgLabel.appendChild(bgGroup);
+    appearance.appendChild(bgLabel);
+
+    if (state.theme.backgroundType === "solid") {
+      const box = el("div", { className: "bg-extra" });
+      box.appendChild(colorControl("Background Color", state.theme.backgroundColor, v => state.theme.backgroundColor = v));
+      appearance.appendChild(box);
+    } else if (state.theme.backgroundType === "image") {
+      const box = el("div", { className: "bg-extra" });
+      const bgFileInput = el("input", { type: "file", accept: "image/*" });
+      bgFileInput.addEventListener("change", () => {
+        const file = bgFileInput.files[0];
+        if (!file) return;
+        fileToDataUrl(file, (dataUrl) => { state.theme.backgroundImageUrl = dataUrl; renderControls(); renderPreview(); });
+      });
+      box.appendChild(bgFileInput);
+      if (state.theme.backgroundImageUrl) box.appendChild(el("img", { className: "bg-preview", src: state.theme.backgroundImageUrl }));
+      appearance.appendChild(box);
+    }
+
+    const fontLabel = el("label", { className: "control" });
+    fontLabel.appendChild(document.createTextNode("Font"));
+    const fontGroup = el("div", { className: "radio-group" });
+    [["google", "Google Font (recommended)"], ["custom", "Custom Font File"], ["plain", "Simple / System Font"]].forEach(([val, text]) => {
+      const wrap = el("label");
+      const radio = el("input", { type: "radio", name: "fontmode", checked: fontMode === val });
+      radio.addEventListener("change", () => { fontMode = val; applyFontMode(); renderControls(); renderPreview(); });
+      wrap.appendChild(radio);
+      wrap.appendChild(document.createTextNode(" " + text));
+      fontGroup.appendChild(wrap);
+    });
+    fontLabel.appendChild(fontGroup);
+    appearance.appendChild(fontLabel);
+
+    if (fontMode === "google") {
+      const box = el("div", { className: "font-extra" });
+      box.appendChild(textControl("Google Font Name", "e.g. Inter, Poppins, Roboto", state.theme.googleFont.name, v => state.theme.googleFont.name = v));
+      box.appendChild(textControl("Google Font Stylesheet URL", "Copy from fonts.google.com", state.theme.googleFont.url, v => state.theme.googleFont.url = v));
+      appearance.appendChild(box);
+    } else if (fontMode === "custom") {
+      const box = el("div", { className: "font-extra" });
+      box.appendChild(textControl("Font Name", "", state.theme.customFontFile.name, v => state.theme.customFontFile.name = v));
+      box.appendChild(textControl("Font File URL", "Must be hosted with a public link", state.theme.customFontFile.url, v => state.theme.customFontFile.url = v));
+      appearance.appendChild(box);
+    } else {
+      const box = el("div", { className: "font-extra" });
+      box.appendChild(textControl("CSS Font Family", "'inherit' matches the host site", state.theme.fontFamily, v => state.theme.fontFamily = v));
+      appearance.appendChild(box);
+    }
+    controlsEl.appendChild(appearance);
+
+    // --- Services & Availability ---
+    const servicesSection = el("section");
+    const servicesH3 = el("h3"); servicesH3.textContent = "Services & Availability"; servicesSection.appendChild(servicesH3);
+    const servicesHint = el("div", { className: "section-hint" });
+    servicesHint.textContent = "Each service customers can book, its duration, whether it needs an address, and which days/hours it can be booked. This becomes the SERVICES list baked into your Code.gs.";
+    servicesSection.appendChild(servicesHint);
+    state.services.forEach((service, index) => { servicesSection.appendChild(buildServiceCard(service, index)); });
+    const addServiceBtn = el("button", { className: "add-btn", type: "button" });
+    addServiceBtn.textContent = "+ Add Service";
+    addServiceBtn.addEventListener("click", () => {
+      state.services.push({ name: "New Service", durationMinutes: 60, requiresAddress: false, availability: [] });
+      renderControls(); renderPreview();
+    });
+    servicesSection.appendChild(addServiceBtn);
+    controlsEl.appendChild(servicesSection);
+
+    // --- Extra Fields ---
+    const extraSection = el("section");
+    const extraH3 = el("h3"); extraH3.textContent = "Extra Fields (optional)"; extraSection.appendChild(extraH3);
+    const extraHint = el("div", { className: "section-hint" });
+    extraHint.textContent = "Anything beyond Name/Phone/Email/Address/Notes you want to ask on the final step.";
+    extraSection.appendChild(extraHint);
+    state.extraFields.forEach((field, index) => { extraSection.appendChild(buildExtraFieldCard(field, index)); });
+    const addExtraBtn = el("button", { className: "add-btn", type: "button" });
+    addExtraBtn.textContent = "+ Add Extra Field";
+    addExtraBtn.addEventListener("click", () => {
+      state.extraFields.push({ label: "New Field", type: "text", required: false });
+      renderControls(); renderPreview();
+    });
+    extraSection.appendChild(addExtraBtn);
+    controlsEl.appendChild(extraSection);
+  }
+
+  function applyFontMode() {
+    if (fontMode === "google") { state.theme.customFontFile = { name: "", url: "" }; }
+    else if (fontMode === "custom") { state.theme.googleFont = { name: "", url: "" }; }
+    else { state.theme.googleFont = { name: "", url: "" }; state.theme.customFontFile = { name: "", url: "" }; }
+  }
+
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById("download-btn").addEventListener("click", () => {
+    downloadFile("booking-form.html", generateFullHTML(), "text/html");
+  });
+
+  document.getElementById("copy-btn").addEventListener("click", () => {
+    navigator.clipboard.writeText(generateFullHTML()).then(() => {
+      const status = document.getElementById("copy-status");
+      status.textContent = "Copied!";
+      setTimeout(() => status.textContent = "", 2000);
+    });
+  });
+
+  document.getElementById("download-csv-btn").addEventListener("click", () => {
+    downloadFile("bookings-template.csv", generateSheetTemplateCSV(), "text/csv");
+  });
+
+  document.getElementById("download-gs-btn").addEventListener("click", () => {
+    downloadFile("Code.gs", buildCodeGs(), "text/plain");
+  });
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  renderControls();
+  renderPreview();
+  document.querySelector('#preview-step-tabs button[data-step="1"]').classList.add("active");
+</script>
+
+</body>
+</html>

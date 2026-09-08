@@ -1,0 +1,381 @@
+<!--
+  Lead Capture Form
+  Drop this block into your website's HTML wherever you want the form
+  to appear. Everything is controlled from the CONFIG block below —
+  logo, title, footer, button text, messages, colors/fonts/background,
+  and the full list of fields (add, remove, reorder, mark required or
+  optional). Nothing outside CONFIG should need to change.
+
+  Prefer a visual editor instead? Open website/form-builder.html in
+  your browser — same result, no code editing needed.
+
+  IMPORTANT: whatever field labels you use in CONFIG.fields must match
+  the column headers in your Google Sheet EXACTLY (case-insensitive).
+  See apps-script/Code.gs and README.md for how that matching works.
+-->
+
+<style>
+  .lead-capture-widget {
+    --lc-primary-color: #2563eb;
+    --lc-bg-color: #ffffff;
+    --lc-text-color: #111111;
+    --lc-border-color: #d1d5db;
+    --lc-font-family: inherit;
+    --lc-border-radius: 8px;
+
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--lc-bg-color);
+    background-size: cover;
+    background-position: center;
+    color: var(--lc-text-color);
+    font-family: var(--lc-font-family);
+    border-radius: var(--lc-border-radius);
+    box-sizing: border-box;
+  }
+
+  .lead-capture-widget * {
+    box-sizing: border-box;
+  }
+
+  .lead-capture-widget .lc-logo {
+    display: block;
+    margin: 0 auto 16px;
+  }
+
+  .lead-capture-widget h2 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+  }
+
+  .lead-capture-widget form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .lead-capture-widget label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .lead-capture-widget input,
+  .lead-capture-widget select,
+  .lead-capture-widget textarea {
+    font-family: var(--lc-font-family);
+    font-size: 15px;
+    font-weight: normal;
+    padding: 10px 12px;
+    border: 1px solid var(--lc-border-color);
+    border-radius: var(--lc-border-radius);
+    background-color: #ffffff;
+    color: var(--lc-text-color);
+    width: 100%;
+  }
+
+  .lead-capture-widget textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .lead-capture-widget input:focus,
+  .lead-capture-widget select:focus,
+  .lead-capture-widget textarea:focus {
+    outline: none;
+    border-color: var(--lc-primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc-primary-color) 20%, transparent);
+  }
+
+  .lead-capture-widget button {
+    margin-top: 4px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--lc-font-family);
+    color: #ffffff;
+    background-color: var(--lc-primary-color);
+    border: none;
+    border-radius: var(--lc-border-radius);
+    cursor: pointer;
+  }
+
+  .lead-capture-widget button:hover {
+    filter: brightness(0.92);
+  }
+
+  .lead-capture-widget #lead-form-status {
+    font-size: 14px;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  .lead-capture-widget .lc-footer {
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+    opacity: 0.75;
+  }
+</style>
+
+<div class="lead-capture-widget" id="lead-capture-widget">
+  <h2 id="lc-title"></h2>
+  <form id="lead-form"></form>
+  <p class="lc-footer" id="lc-footer"></p>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  // CONFIG — edit everything here. Nothing below this block
+  // should need to change.
+  // ─────────────────────────────────────────────────────────
+  const CONFIG = {
+    // Replace with your deployed Apps Script /exec URL
+    scriptUrl: "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE",
+
+    // Logo shown above the title. Leave url empty to hide.
+    // url can be a link to an image already hosted somewhere, or a
+    // long "data:image/png;base64,..." string (what you get if you
+    // use the visual builder's upload button).
+    logo: {
+      url: "",
+      maxHeight: "48px"
+    },
+
+    // Text shown above the form. Leave "" to hide.
+    title: "Get in Touch",
+
+    // Text shown below the submit button. Leave "" to hide.
+    footer: "We typically respond within 1 business day.",
+
+    // Text on the submit button
+    submitButtonText: "Submit",
+
+    // Message shown after a successful submission
+    successMessage: "Thank you! We'll be in touch with you shortly.",
+
+    // Message shown if the submission fails
+    errorMessage: "Something went wrong. Please try again or contact us directly.",
+
+    // The form's fields, top to bottom. Add, remove, reorder, or edit
+    // any entry. "label" is what the visitor sees AND must exactly
+    // match a column header in your Google Sheet (case-insensitive).
+    // type: "text" | "email" | "tel" | "textarea" | "select"
+    // required: true/false
+    // options: only used when type is "select" — list of choices
+    // placeholder: optional hint text shown inside empty text fields
+    fields: [
+      { label: "Name", type: "text", required: true },
+      { label: "Business Name", type: "text", required: false },
+      { label: "Email", type: "email", required: true },
+      { label: "Phone", type: "tel", required: false },
+      { label: "Business Type", type: "text", required: false, placeholder: "e.g. salon, contractor, landscaper" },
+      {
+        label: "Service Interested",
+        type: "select",
+        required: false,
+        options: [
+          "Automation (call answering, booking, follow-up)",
+          "Website (includes photography add-on)",
+          "Help Improving Your Team's Onboarding/Training",
+          "Social Media Help",
+          "Full Package",
+          "General Inquiry",
+          "Not Sure Yet"
+        ]
+      },
+      {
+        label: "Preferred Contact",
+        type: "select",
+        required: false,
+        options: ["Email", "Phone Call", "Text"]
+      },
+      { label: "Message", type: "textarea", required: false }
+    ],
+
+    // Appearance — change these per website to match its branding.
+    theme: {
+      primaryColor: "#2563eb",
+      textColor: "#111111",
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+
+      // BACKGROUND — three modes, pick one with backgroundType:
+      // "solid"       — a flat color (set backgroundColor below)
+      // "transparent" — no background at all, so the form blends
+      //                 into whatever color/pattern the host page
+      //                 already has behind it
+      // "image"       — a background image (set backgroundImageUrl —
+      //                 a hosted link, or a data: URL from the
+      //                 visual builder's upload button)
+      backgroundType: "solid",
+      backgroundColor: "#ffffff",
+      backgroundImageUrl: "",
+
+      // FONT — three ways to set it, use only ONE:
+      //
+      // 1) Plain CSS font stack (system fonts, or "inherit" to match
+      //    the host site automatically). Used if the two options
+      //    below are both left empty.
+      fontFamily: "inherit",
+      //
+      // 2) Google Font — free, no hosting needed. Defaults to Inter.
+      //    To use a different one: pick a font at fonts.google.com,
+      //    copy its <link href="..."> URL and name in here.
+      googleFont: {
+        name: "Inter",
+        url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      },
+      //
+      // 3) Custom font file — for a client's own brand font. The file
+      //    (.woff2/.woff/.ttf) needs to be hosted somewhere with a
+      //    public URL (their website's own files, a CDN, etc.) —
+      //    there's no upload button here since this is a static
+      //    snippet with no server of its own. Example:
+      customFontFile: {
+        name: "",  // e.g. "AcmeBrandFont" — any name you choose
+        url: ""    // e.g. "https://clientsite.com/fonts/acme-brand.woff2"
+      }
+    }
+  };
+  // ─────────────────────────────────────────────────────────
+
+  const widgetEl = document.getElementById('lead-capture-widget');
+
+  // Logo
+  if (CONFIG.logo && CONFIG.logo.url) {
+    const logoImg = document.createElement('img');
+    logoImg.src = CONFIG.logo.url;
+    logoImg.className = 'lc-logo';
+    logoImg.style.maxHeight = CONFIG.logo.maxHeight || '48px';
+    logoImg.alt = 'Logo';
+    widgetEl.insertBefore(logoImg, widgetEl.firstChild);
+  }
+
+  // Colors / border radius
+  widgetEl.style.setProperty('--lc-primary-color', CONFIG.theme.primaryColor);
+  widgetEl.style.setProperty('--lc-text-color', CONFIG.theme.textColor);
+  widgetEl.style.setProperty('--lc-border-color', CONFIG.theme.borderColor);
+  widgetEl.style.setProperty('--lc-border-radius', CONFIG.theme.borderRadius);
+
+  // Background — solid color, transparent, or image
+  if (CONFIG.theme.backgroundType === 'transparent') {
+    widgetEl.style.setProperty('--lc-bg-color', 'transparent');
+  } else if (CONFIG.theme.backgroundType === 'image' && CONFIG.theme.backgroundImageUrl) {
+    widgetEl.style.setProperty('--lc-bg-color', 'transparent');
+    widgetEl.style.backgroundImage = 'url("' + CONFIG.theme.backgroundImageUrl + '")';
+  } else {
+    widgetEl.style.setProperty('--lc-bg-color', CONFIG.theme.backgroundColor);
+  }
+
+  // Apply font — checks Google Font, then custom font file, then falls
+  // back to the plain fontFamily string.
+  if (CONFIG.theme.googleFont && CONFIG.theme.googleFont.url) {
+    const linkEl = document.createElement('link');
+    linkEl.rel = 'stylesheet';
+    linkEl.href = CONFIG.theme.googleFont.url;
+    document.head.appendChild(linkEl);
+    widgetEl.style.setProperty('--lc-font-family', "'" + CONFIG.theme.googleFont.name + "', sans-serif");
+  } else if (CONFIG.theme.customFontFile && CONFIG.theme.customFontFile.url) {
+    const fontName = CONFIG.theme.customFontFile.name || 'CustomBrandFont';
+    const styleEl = document.createElement('style');
+    styleEl.textContent = '@font-face { font-family: "' + fontName + '"; src: url("' + CONFIG.theme.customFontFile.url + '"); }';
+    document.head.appendChild(styleEl);
+    widgetEl.style.setProperty('--lc-font-family', "'" + fontName + "', sans-serif");
+  } else {
+    widgetEl.style.setProperty('--lc-font-family', CONFIG.theme.fontFamily);
+  }
+
+  // Title / footer
+  const titleEl = document.getElementById('lc-title');
+  if (CONFIG.title) { titleEl.textContent = CONFIG.title; } else { titleEl.style.display = 'none'; }
+
+  const footerEl = document.getElementById('lc-footer');
+  if (CONFIG.footer) { footerEl.textContent = CONFIG.footer; } else { footerEl.style.display = 'none'; }
+
+  // Build the form fields from CONFIG.fields
+  const formEl = document.getElementById('lead-form');
+
+  CONFIG.fields.forEach(function (field, index) {
+    const wrapper = document.createElement('label');
+    wrapper.textContent = field.label + (field.required ? ' *' : '');
+
+    let input;
+    if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+    } else if (field.type === 'select') {
+      input = document.createElement('select');
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '-- Select --';
+      input.appendChild(blank);
+      (field.options || []).forEach(function (opt) {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        input.appendChild(o);
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = field.type || 'text';
+    }
+
+    input.id = 'lc-field-' + index;
+    input.dataset.fieldLabel = field.label;
+    if (field.required) input.required = true;
+    if (field.placeholder) input.placeholder = field.placeholder;
+
+    wrapper.appendChild(input);
+    formEl.appendChild(wrapper);
+  });
+
+  // Submit button + status line
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.textContent = CONFIG.submitButtonText;
+  formEl.appendChild(submitBtn);
+
+  const statusEl = document.createElement('p');
+  statusEl.id = 'lead-form-status';
+  formEl.appendChild(statusEl);
+
+  // Handle submit
+  formEl.addEventListener('submit', function (e) {
+    e.preventDefault();
+    statusEl.textContent = 'Sending...';
+
+    // Build { "Name": "...", "Email": "...", ... } keyed by field label,
+    // so it lines up with your Google Sheet's column headers.
+    const fieldsData = {};
+    CONFIG.fields.forEach(function (field, index) {
+      const el = document.getElementById('lc-field-' + index);
+      fieldsData[field.label] = el.value;
+    });
+
+    const payload = {
+      fields: fieldsData,
+      sourcePage: window.location.href
+    };
+
+    fetch(CONFIG.scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors', // Apps Script's response doesn't include CORS
+                        // headers the browser expects; this tells the
+                        // browser not to block on that. We can't read
+                        // the response back, but the write to the
+                        // Sheet still succeeds.
+      body: JSON.stringify(payload)
+    })
+      .then(() => {
+        statusEl.textContent = CONFIG.successMessage;
+        formEl.reset();
+      })
+      .catch(() => {
+        statusEl.textContent = CONFIG.errorMessage;
+      });
+  });
+</script>

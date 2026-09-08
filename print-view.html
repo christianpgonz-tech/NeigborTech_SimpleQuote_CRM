@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print View</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Georgia, 'Times New Roman', serif; color: #1f2937;
+    background: #f3f4f6;
+  }
+  .toolbar {
+    background: #111827; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .toolbar button {
+    font-family: -apple-system, sans-serif; font-size: 14px; font-weight: 600; padding: 9px 16px;
+    border-radius: 6px; border: none; background: #2563eb; color: white; cursor: pointer;
+  }
+  .toolbar span { color: #9ca3af; font-family: -apple-system, sans-serif; font-size: 13px; }
+  .page {
+    max-width: 720px; margin: 24px auto; background: white;
+    border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden;
+  }
+  .page-top-bar { height: 10px; }
+  .page-inner { padding: 48px; }
+  .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+  .doc-header img { max-height: 60px; margin-bottom: 10px; }
+  .biz-info { font-size: 13px; color: #4b5563; line-height: 1.6; }
+  .doc-title { font-size: 34px; font-weight: bold; text-align: right; letter-spacing: 0.08em; }
+  .doc-meta { font-size: 13px; text-align: right; color: #6b7280; line-height: 1.6; }
+  .customer-block { margin-bottom: 28px; font-size: 13px; line-height: 1.6; }
+  .customer-block .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: #9ca3af; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th { text-align: left; padding: 12px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: white; }
+  th:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+  th:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+  td { padding: 10px 10px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  td.num, th.num { text-align: right; }
+  .totals { max-width: 280px; margin-left: auto; font-size: 13px; }
+  .totals .row { display: flex; justify-content: space-between; padding: 6px 10px; }
+  .totals .row.total { font-weight: bold; font-size: 17px; border-radius: 4px; margin-top: 6px; padding: 10px; }
+  .status-pill {
+    display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 11px; font-weight: bold;
+    font-family: -apple-system, sans-serif; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .section { margin-top: 28px; font-size: 12px; color: #4b5563; line-height: 1.6; }
+  .section .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: #9ca3af; margin-bottom: 4px; }
+  .empty-note { text-align: center; padding: 60px 20px; font-family: -apple-system, sans-serif; color: #6b7280; }
+
+  @media print {
+    body { background: white; }
+    .toolbar { display: none; }
+    .page { box-shadow: none; margin: 0; max-width: none; }
+    .page-inner { padding: 20px 0; }
+    .page-top-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th, .totals .row.total { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span id="toolbar-label">Loading...</span>
+  <button id="print-btn" onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<div class="page">
+  <div class="page-top-bar" id="page-top-bar"></div>
+  <div class="page-inner" id="page-content">
+    <p class="empty-note">Loading...</p>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const docType = params.get('type'); // "quote" or "invoice"
+  const docId = params.get('id');
+  const apiUrl = params.get('apiUrl');
+  const adminKey = params.get('adminKey');
+
+  let jsonpCounter = 0;
+  function callApi(action, extra) {
+    return new Promise((resolve) => {
+      const callbackName = 'pvCallback' + (jsonpCounter++);
+      window[callbackName] = function (result) {
+        delete window[callbackName];
+        script.remove();
+        resolve(result);
+      };
+      const query = Object.assign({ action, callback: callbackName, adminKey }, extra || {});
+      const queryString = Object.keys(query).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(query[k])).join('&');
+      const script = document.createElement('script');
+      script.src = apiUrl + '?' + queryString;
+      script.onerror = () => { delete window[callbackName]; resolve({ success: false, error: 'Could not reach the server.' }); };
+      document.body.appendChild(script);
+    });
+  }
+
+  function formatMoney(n, currency) {
+    const sym = currency === 'EUR' ? '\u20ac' : currency === 'GBP' ? '\u00a3' : '$';
+    return sym + Number(n || 0).toFixed(2);
+  }
+  function formatDate(d) {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date)) return String(d);
+    return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>'"]/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[c]);
+  }
+
+  function renderError(message) {
+    document.getElementById('page-content').innerHTML = '<p class="empty-note">' + escapeHtml(message) + '</p>';
+    document.getElementById('toolbar-label').textContent = 'Error';
+    document.getElementById('print-btn').style.display = 'none';
+  }
+
+  async function render() {
+    if (!apiUrl || !docId || !docType) {
+      renderError('Missing required link parameters (type, id, apiUrl).');
+      return;
+    }
+
+    const settingsResult = await callApi('get_settings');
+    const settings = settingsResult.success ? settingsResult.data : {};
+
+    const recordResult = await callApi(docType === 'invoice' ? 'get_invoice' : 'get_quote', { id: docId });
+    if (!recordResult.success) {
+      renderError('Could not load this ' + docType + ': ' + recordResult.error);
+      return;
+    }
+    const record = recordResult.data;
+
+    const isInvoice = docType === 'invoice';
+    const docNumber = isInvoice ? record.Invoice_Number : record.Quote_Number;
+    const docTitle = isInvoice ? 'INVOICE' : 'QUOTE';
+    const primaryColor = /^#[0-9a-f]{6}$/i.test(settings.Primary_Color || '') ? settings.Primary_Color : '#2563eb';
+    const currency = settings.Currency || 'USD';
+
+    document.getElementById('toolbar-label').textContent = docTitle + ' ' + docNumber;
+    document.title = docTitle + ' ' + docNumber;
+    document.getElementById('page-top-bar').style.background = primaryColor;
+
+    const itemsRows = (record.items || []).map(item => `
+      <tr>
+        <td>${escapeHtml(item.Description)}</td>
+        <td class="num">${item.Quantity || ''}</td>
+        <td class="num">${formatMoney(item.Rate, currency)}</td>
+        <td class="num">${formatMoney(item.Amount, currency)}</td>
+      </tr>
+    `).join('');
+
+    const metaRows = isInvoice
+      ? `<div>Date: ${formatDate(record.Created_Date)}</div><div>Due: ${formatDate(record.Due_Date)}</div>`
+      : `<div>Date: ${formatDate(record.Created_Date)}</div><div>Expires: ${formatDate(record.Expiration_Date)}</div>`;
+
+    const statusColors = { Accepted: '#059669', Paid: '#059669', Draft: '#6b7280', Sent: '#2563eb', Declined: '#dc2626', Void: '#dc2626', Overdue: '#d97706' };
+    const statusColor = statusColors[record.Status] || '#6b7280';
+
+    const notesSection = record.Notes ? `
+      <div class="section">
+        <div class="label">Notes</div>
+        <div>${escapeHtml(record.Notes).replace(/\n/g, '<br>')}</div>
+      </div>` : '';
+
+    const termsText = isInvoice ? (settings.Invoice_Terms || '') : (record.Terms || settings.Quote_Terms || '');
+    const termsSection = termsText ? `
+      <div class="section">
+        <div class="label">${isInvoice ? 'Terms' : 'Terms & Conditions'}</div>
+        <div>${escapeHtml(termsText).replace(/\n/g, '<br>')}</div>
+      </div>` : '';
+
+    const paymentSection = isInvoice && (record.Payment_Instructions || settings.Payment_Instructions) ? `
+      <div class="section">
+        <div class="label">Payment Instructions</div>
+        <div>${escapeHtml(record.Payment_Instructions || settings.Payment_Instructions).replace(/\n/g, '<br>')}</div>
+      </div>` : '';
+
+    const invoicePaymentTotals = isInvoice ? `
+      <div class="row"><span>Amount Paid</span><span>${formatMoney(record.Amount_Paid, currency)}</span></div>
+      <div class="row total" style="background:${primaryColor}1a;color:${primaryColor}"><span>Balance Due</span><span>${formatMoney(record.Balance_Due, currency)}</span></div>
+    ` : '';
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="doc-header">
+        <div>
+          ${/^https:\/\//i.test(settings.Logo_URL || '') ? '<img src="' + escapeHtml(settings.Logo_URL) + '">' : ''}
+          <div class="biz-info">
+            <strong>${escapeHtml(settings.Business_Name)}</strong><br>
+            ${escapeHtml(settings.Business_Address)}<br>
+            ${escapeHtml(settings.Business_Phone)}${settings.Business_Email ? ' \u00b7 ' + escapeHtml(settings.Business_Email) : ''}
+          </div>
+        </div>
+        <div>
+          <div class="doc-title" style="color:${primaryColor}">${docTitle}</div>
+          <div class="doc-meta">
+            <div>#${escapeHtml(docNumber)}</div>
+            ${metaRows}
+          </div>
+        </div>
+      </div>
+
+      <span class="status-pill" style="background:${statusColor}22;color:${statusColor}">${escapeHtml(record.Status)}</span>
+
+      <div class="customer-block">
+        <div class="label">Bill To</div>
+        <strong>${escapeHtml(record.Customer_Name)}</strong><br>
+        ${escapeHtml(record.Customer_Email)}${record.Customer_Email && record.Customer_Phone ? ' \u00b7 ' : ''}${escapeHtml(record.Customer_Phone)}
+      </div>
+
+      <table>
+        <tr style="background:${primaryColor}">
+          <th>Description</th>
+          <th class="num">Qty</th>
+          <th class="num">Rate</th>
+          <th class="num">Amount</th>
+        </tr>
+        ${itemsRows}
+      </table>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>${formatMoney(record.Subtotal, currency)}</span></div>
+        ${record.Discount ? '<div class="row"><span>Discount</span><span>-' + formatMoney(record.Discount, currency) + '</span></div>' : ''}
+        <div class="row"><span>Tax</span><span>${formatMoney(record.Tax, currency)}</span></div>
+        <div class="row${isInvoice ? '' : ' total'}"${isInvoice ? ' style="border-top:1px solid #374151;margin-top:4px;padding-top:8px;font-weight:bold;"' : ` style="background:${primaryColor}1a;color:${primaryColor}"`}><span>Total</span><span>${formatMoney(record.Total, currency)}</span></div>
+        ${invoicePaymentTotals}
+      </div>
+
+      ${notesSection}
+      ${termsSection}
+      ${paymentSection}
+    `;
+  }
+
+  render();
+</script>
+
+</body>
+</html>

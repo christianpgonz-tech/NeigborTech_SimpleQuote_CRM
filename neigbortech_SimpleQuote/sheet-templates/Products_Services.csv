@@ -1,0 +1,3 @@
+Item_ID,Name,Description,Type,Unit,Duration_Minutes,Rate,Taxable,Active
+ITEM-SAMPLE-1,Technology Help Visit,In-home technology troubleshooting and support,Service,hour,60,85,true,true
+ITEM-SAMPLE-2,Smart TV Setup,Connect and configure one smart TV,Service,each,45,85,true,true
