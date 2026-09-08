@@ -121,6 +121,15 @@
   .calendar-event { display:block; width:100%; border:0; border-left:3px solid var(--primary-color); background:#eff6ff; color:#1e3a8a; text-align:left; border-radius:4px; padding:5px 6px; margin:3px 0; font-size:11px; line-height:1.25; cursor:pointer; }
   .filter-row { display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
   .filter-row .field { margin:0; min-width:180px; }
+  .assistant-layout { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:18px; align-items:start; }
+  .assistant-note { min-height:180px; line-height:1.5; }
+  .assistant-preview { background:#f8fafc; border:1px solid var(--border-color); border-radius:var(--radius); padding:16px; }
+  .assistant-preview h3 { margin:0 0 4px; font-size:16px; }
+  .assistant-chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 9px; background:#e0f2fe; color:#075985; font-size:12px; font-weight:700; }
+  .assistant-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+  .assistant-actions .btn { width:100%; }
+  .assistant-disclosure { border-left:3px solid #7c3aed; background:#f5f3ff; color:#4c1d95; padding:10px 12px; border-radius:4px; font-size:12px; margin-bottom:16px; }
+  .assistant-empty { color:var(--muted-color); padding:34px 14px; text-align:center; }
   @media (max-width:760px) {
     header { align-items:flex-start; gap:10px; flex-wrap:wrap; }
     nav { overflow-x:auto; width:100%; order:3; }
@@ -130,6 +139,8 @@
     .calendar-weekday, .calendar-day.outside { display:none; }
     .calendar-day { min-height:auto; border:1px solid var(--border-color); border-radius:6px; }
     .calendar-day:not(:has(.calendar-event)) { display:none; }
+    .assistant-layout { grid-template-columns:1fr; }
+    .assistant-actions { grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -147,6 +158,7 @@
     <button data-view="invoices">Invoices</button>
   </nav>
   <div class="header-actions">
+    <button class="btn" id="ai-assistant-btn">AI Assistant</button>
     <button class="btn" id="phone-inquiry-btn">+ Phone Inquiry</button>
     <button class="btn" id="new-customer-btn">+ Customer</button>
     <button class="btn btn-primary" id="new-quote-btn">+ New Quote</button>
@@ -177,7 +189,7 @@
   };
   // ─────────────────────────────────────────────────────────
 
-  const DEMO_MODE = new URLSearchParams(location.search).get('demo') === '1';
+  const DEMO_MODE = location.hostname.endsWith('.hf.space') || new URLSearchParams(location.search).get('demo') === '1';
   const demoNow = new Date();
   const demoState = {
     leads: [
@@ -421,6 +433,139 @@
     card.appendChild(historySection('Quotes', data.quotes, row => el('button', { className: 'btn btn-small' }, [(row.Quote_Number || 'Quote') + ' — ' + formatMoney(row.Total)])));
     card.appendChild(historySection('Invoices', data.invoices, row => el('span', {}, [(row.Invoice_Number || 'Invoice') + ' — ' + formatMoney(row.Balance_Due) + ' due'])));
     mainEl.appendChild(card);
+  }
+
+  // ============================================================
+  // SMART NOTES ASSISTANT — local extraction + browser AI matching
+  // ============================================================
+  let assistantEmbedder;
+
+  function nextWeekdayDate(dayName) {
+    const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    const target = days.indexOf(dayName.toLowerCase());
+    if (target < 0) return '';
+    const date = new Date();
+    let add = (target - date.getDay() + 7) % 7;
+    if (add === 0) add = 7;
+    date.setDate(date.getDate() + add);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function extractSmartNotes(notes, catalog) {
+    const email = (notes.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i) || [''])[0];
+    const phoneMatch = notes.match(/(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}/);
+    const budgetMatch = notes.match(/(?:budget(?:\s+is)?|around|about|up to|estimate(?:d)?)?\s*\$\s*([\d,]+(?:\.\d{1,2})?)/i);
+    const named = notes.match(/(?:my name is|this is|customer is|caller is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/);
+    const opening = notes.match(/^\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:needs|called|wants|would like|is looking)/);
+    const weekday = notes.match(/(?:next\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
+    const isoDate = notes.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+    const lower = notes.toLowerCase();
+    let bestItem = null; let bestScore = 0;
+    catalog.forEach(item => {
+      const words = ((item.Name || '') + ' ' + (item.Description || '')).toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2);
+      const score = words.reduce((sum, word) => sum + (lower.includes(word) ? 1 : 0), 0);
+      if (score > bestScore) { bestScore = score; bestItem = item; }
+    });
+    return {
+      name: (named && named[1]) || (opening && opening[1]) || '',
+      phone: phoneMatch ? phoneMatch[0] : '',
+      email,
+      service: bestItem ? bestItem.Name : '',
+      preferredDate: isoDate ? isoDate[0] : (weekday ? nextWeekdayDate(weekday[1]) : ''),
+      budget: budgetMatch ? budgetMatch[1].replace(/,/g, '') : '',
+      recommendation: weekday ? 'Create Booking' : (budgetMatch && bestItem ? 'Draft Quote' : 'Create Lead'),
+      matchedItem: bestItem,
+      notes,
+      matchMethod: bestItem ? 'keyword fallback' : 'no catalog match'
+    };
+  }
+
+  async function improveServiceMatchWithAI(result, catalog, onProgress) {
+    if (!catalog.length) return result;
+    onProgress('Loading the browser AI model for service matching…');
+    try {
+      if (!assistantEmbedder) {
+        const transformers = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1');
+        transformers.env.allowLocalModels = false;
+        assistantEmbedder = await transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
+      }
+      onProgress('Matching the notes to your products and services…');
+      const labels = catalog.map(item => (item.Name || '') + '. ' + (item.Description || ''));
+      const vectors = await assistantEmbedder([result.notes].concat(labels), { pooling: 'mean', normalize: true });
+      const dim = vectors.dims[vectors.dims.length - 1];
+      const data = vectors.data;
+      let bestIndex = 0; let bestScore = -Infinity;
+      for (let i = 0; i < labels.length; i++) {
+        let score = 0;
+        for (let j = 0; j < dim; j++) score += data[j] * data[(i + 1) * dim + j];
+        if (score > bestScore) { bestScore = score; bestIndex = i; }
+      }
+      result.matchedItem = catalog[bestIndex];
+      result.service = catalog[bestIndex].Name;
+      result.matchMethod = 'Hugging Face browser AI';
+    } catch (error) {
+      result.matchMethod = result.matchedItem ? 'local fallback (AI model unavailable)' : 'no catalog match';
+    }
+    return result;
+  }
+
+  async function renderAiAssistant() {
+    mainEl.innerHTML = '<p class="hint">Preparing assistant…</p>';
+    const catalogResult = await callApi('list_catalog');
+    const catalog = catalogResult.success ? catalogResult.data : [];
+    mainEl.textContent = '';
+    const card = el('div', { className: 'card' });
+    const toolbar = el('div', { className: 'toolbar' }, [el('div', {}, [el('h2', { style:'margin:0;font-size:18px' }, ['Smart Notes Assistant']), el('p', { className:'hint' }, ['Turn a customer conversation into an editable CRM action.'])])]);
+    const back = el('button', { className:'btn btn-small' }, ['← Back']); back.addEventListener('click', renderSourceList.bind(null, 'Lead')); toolbar.appendChild(back); card.appendChild(toolbar);
+    card.appendChild(el('div', { className:'assistant-disclosure' }, ['Experimental browser-based AI. Notes stay in this browser. Review every field before creating a record.']));
+    const layout = el('div', { className:'assistant-layout' });
+    const inputSide = el('div');
+    const notes = textareaField('Customer call notes', 'Maria needs help installing a smart TV next Friday. Her phone number is 305-733-7567, her email is maria.tv@hotmail.com, and her budget is around $250.');
+    notes.textarea.classList.add('assistant-note');
+    inputSide.appendChild(notes.wrapper);
+    const analyze = el('button', { className:'btn btn-primary' }, ['Analyze Notes']);
+    const status = el('p', { className:'status-line', role:'status', 'aria-live':'polite' });
+    inputSide.appendChild(analyze); inputSide.appendChild(status);
+    const previewSide = el('div', { className:'assistant-preview' }, [el('div', { className:'assistant-empty' }, ['Your editable preview will appear here.'])]);
+    layout.appendChild(inputSide); layout.appendChild(previewSide); card.appendChild(layout); mainEl.appendChild(card);
+
+    analyze.addEventListener('click', async () => {
+      const sourceNotes = notes.textarea.value.trim();
+      if (!sourceNotes) { status.textContent = 'Add customer notes first.'; status.className = 'status-line error'; notes.textarea.focus(); return; }
+      analyze.disabled = true; status.className = 'status-line'; status.textContent = 'Reading names, contact details, dates, and budget…';
+      let result = extractSmartNotes(sourceNotes, catalog);
+      result = await improveServiceMatchWithAI(result, catalog, message => { status.textContent = message; });
+      analyze.disabled = false; status.textContent = 'Analysis ready. Review the preview before creating anything.'; status.className = 'status-line success';
+      renderAssistantPreview(previewSide, result, catalog);
+    });
+  }
+
+  function renderAssistantPreview(container, result, catalog) {
+    container.textContent = '';
+    container.appendChild(el('h3', {}, ['Editable preview']));
+    container.appendChild(el('p', { className:'hint' }, ['Service matched using ' + result.matchMethod + '.']));
+    const name = textField('Customer name', result.name); const phone = textField('Phone', result.phone); const email = textField('Email', result.email);
+    const service = selectField('Requested service', result.service, [''].concat(catalog.map(item => item.Name)));
+    const date = textField('Preferred date', result.preferredDate); date.input.type = 'date';
+    const budget = numberField('Estimated budget', result.budget); budget.input.step = '0.01';
+    const recommendation = selectField('Recommended next step', result.recommendation, ['Create Customer','Create Lead','Create Booking','Draft Quote']);
+    container.appendChild(name.wrapper); container.appendChild(el('div', { className:'field-row' }, [phone.wrapper, email.wrapper])); container.appendChild(service.wrapper); container.appendChild(el('div', { className:'field-row' }, [date.wrapper, budget.wrapper])); container.appendChild(recommendation.wrapper);
+    const recommended = el('span', { className:'assistant-chip' }, ['Suggested: ' + result.recommendation]); container.appendChild(recommended);
+    const actionStatus = el('p', { className:'status-line', role:'status', 'aria-live':'polite' });
+    const actions = el('div', { className:'assistant-actions' });
+
+    const currentDraft = () => ({ name:name.input.value.trim(), phone:phone.input.value.trim(), email:email.input.value.trim(), service:service.select.value, preferredDate:date.input.value, budget:budget.input.value, notes:result.notes, matchedItem:catalog.find(item => item.Name === service.select.value) });
+    const ensureCustomer = async draft => {
+      const saved = await callApi('save_customer', { data:encodeURIComponent(JSON.stringify({ name:draft.name, phone:draft.phone, email:draft.email, company:'', address:'', notes:draft.notes, source:'AI Smart Notes' })) });
+      if (!saved.success) throw new Error(saved.error || 'Could not create customer.');
+      return saved.data;
+    };
+    const addAction = (label, handler, primary) => { const button=el('button',{className:'btn'+(primary?' btn-primary':'')},[label]); button.addEventListener('click',async()=>{ if(!name.input.value.trim()){actionStatus.textContent='Customer name is required.';actionStatus.className='status-line error';name.input.focus();return;} actions.querySelectorAll('button').forEach(b=>b.disabled=true);actionStatus.textContent='Creating record…';actionStatus.className='status-line';try{await handler(currentDraft());}catch(error){actions.querySelectorAll('button').forEach(b=>b.disabled=false);actionStatus.textContent=error.message;actionStatus.className='status-line error';}}); actions.appendChild(button); };
+    addAction('Create Customer', async draft => { const customer=await ensureCustomer(draft); renderCustomerProfile(customer.Customer_ID); }, result.recommendation==='Create Customer');
+    addAction('Create Lead', async draft => { const saved=await callApi('save_phone_inquiry',{data:encodeURIComponent(JSON.stringify({customer:{name:draft.name,phone:draft.phone,email:draft.email,company:'',source:'AI Smart Notes'},service:draft.service,notes:draft.notes,followUpDate:draft.preferredDate}))});if(!saved.success)throw new Error(saved.error||'Could not create lead.');renderCustomerProfile(saved.data.customer.Customer_ID); }, result.recommendation==='Create Lead');
+    addAction('Create Booking', async draft => { if(!draft.preferredDate)throw new Error('Add a preferred date before creating a booking.');const customer=await ensureCustomer(draft);const start=new Date(draft.preferredDate+'T10:00:00');const minutes=Number(draft.matchedItem&&draft.matchedItem.Duration_Minutes)||60;const saved=await callApi('create_owner_booking',{data:encodeURIComponent(JSON.stringify({customerId:customer.Customer_ID,service:draft.service,slotStart:start.toISOString(),slotEnd:new Date(start.getTime()+minutes*60000).toISOString(),address:'',notes:draft.notes}))});if(!saved.success)throw new Error(saved.error||'That time could not be booked.');bookingMonth=new Date(start.getFullYear(),start.getMonth(),1);renderBookingsWorkspace(); }, result.recommendation==='Create Booking');
+    addAction('Draft Quote', async draft => { const customer=await ensureCustomer(draft);customer._assistant={notes:draft.notes,budget:draft.budget,item:draft.matchedItem};renderQuoteEditor(null,customer); }, result.recommendation==='Draft Quote');
+    container.appendChild(actions); container.appendChild(actionStatus);
   }
 
   function renderPhoneInquiry() {
@@ -670,7 +815,8 @@
   // ============================================================
   async function renderQuoteEditor(quoteId, selectedCustomer) {
     mainEl.innerHTML = '<p class="hint">Loading...</p>';
-    let quote = { Customer_ID: selectedCustomer ? selectedCustomer.Customer_ID : '', Customer_Name: selectedCustomer ? selectedCustomer.Name : '', Customer_Email: selectedCustomer ? selectedCustomer.Email : '', Customer_Phone: selectedCustomer ? selectedCustomer.Phone : '', Source_Type: '', Source_Reference: '', Status: 'Draft', Notes: '', Terms: '', Discount: 0, items: [{ Description: '', Quantity: 1, Rate: 0, Taxable: true }] };
+    const assistantDraft = selectedCustomer && selectedCustomer._assistant;
+    let quote = { Customer_ID: selectedCustomer ? selectedCustomer.Customer_ID : '', Customer_Name: selectedCustomer ? selectedCustomer.Name : '', Customer_Email: selectedCustomer ? selectedCustomer.Email : '', Customer_Phone: selectedCustomer ? selectedCustomer.Phone : '', Source_Type: assistantDraft ? 'Lead' : '', Source_Reference: assistantDraft ? 'AI Smart Notes' : '', Status: 'Draft', Notes: assistantDraft ? assistantDraft.notes : '', Terms: '', Discount: 0, items: assistantDraft && assistantDraft.item ? [{ Description: assistantDraft.item.Description || assistantDraft.item.Name, Quantity: 1, Rate: Number(assistantDraft.item.Rate) || 0, Taxable: assistantDraft.item.Taxable === true || String(assistantDraft.item.Taxable).toLowerCase() === 'true' }] : [{ Description: '', Quantity: 1, Rate: 0, Taxable: true }] };
 
     if (quoteId) {
       const result = await callApi('get_quote', { id: quoteId });
@@ -1213,6 +1359,7 @@
   document.getElementById('new-invoice-btn').addEventListener('click', () => renderInvoiceEditor(null));
   document.getElementById('new-customer-btn').addEventListener('click', () => renderCustomerEditor());
   document.getElementById('phone-inquiry-btn').addEventListener('click', renderPhoneInquiry);
+  document.getElementById('ai-assistant-btn').addEventListener('click', renderAiAssistant);
 
   // ============================================================
   // INIT
